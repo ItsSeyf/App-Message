@@ -1,0 +1,30 @@
+POST http://localhost:1234/messages/register
+Content-Type: application/json
+
+{
+    "username": "Michael",
+    "password": "123456"
+}
+###Login
+
+POST http://localhost:1234/messages/login
+Content-Type: application/json
+
+{
+    "username": "Michael",
+    "password": "123456"
+}
+
+###Get messages
+GET  http://localhost:1234/messages/
+
+###create message
+POST http://localhost:1234/messages/
+Content-Type: application/json
+
+{
+    "sender": "Michael",
+    "receiver": "John",
+    "messages" :"Hola John",
+    "fecha": "2023-10-01T12:00:00Z"
+}
