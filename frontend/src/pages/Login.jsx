@@ -1,5 +1,6 @@
 import { useState } from "react";
 import * as Material from "@mui/material";
+import { loginUser} from '../services/messages.js'
 
 export default function Login() {
     const [errorUsuario, setErrorUsuario]=useState(false);
@@ -36,16 +37,7 @@ export default function Login() {
         const usuario = data.get('user')
         const contra = data.get('pass')
         try{
-            const respuesta = await fetch('http://localhost:1234/messages/login', {
-                method : 'POST',
-                headers : {
-                    'Content-Type': 'application/json'
-                },
-                body : JSON.stringify({
-                    username: usuario,
-                    password: contra
-                })
-        })
+            const respuesta = await loginUser({ username: usuario, password: contra});
         if(respuesta.ok){
             setCargando(false);
             sessionStorage.setItem('user', JSON.stringify(usuario))
@@ -53,8 +45,10 @@ export default function Login() {
             window.location.href='/Home'
             return
         }
-        throw new Error('Error en la respuesta del servidor')
-
+        setCargando(false);
+        setErrorUsuario(true);
+        setErrorMensajeUsuario('Error en el servidor, intentalo mas tarde');
+        console.error(respuesta);
         }catch(error){
             setCargando(false);
             console.error('Error en la solicitud:', error)

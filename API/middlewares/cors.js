@@ -13,6 +13,6 @@ export const corsMiddleware=({accepted_origins= AcceptedOrigins}={})=>cors({
         return callback(null, true)
         }
         if(!origin){ return callback(null, true)}
-        return callback(new Error('Origen no permitido'))
+        return callback(new Error('Origin not allowed by CORS'))
     }
 })

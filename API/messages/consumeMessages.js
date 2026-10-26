@@ -1,8 +1,8 @@
-import {connection} from './config.js'
-import {MessagesModel} from './models/messages.js'
+import {connection} from '../config/config.js'
+import {MessagesModel} from '../models/messages.js'
 
 async function consumeMessages(io) {
-    const queue = 'javaScript'
+    const queue = 'MessageQueue';
     const {channel} = await connection(queue);
     channel.consume(queue, async (msg)=>{
         if(msg){
@@ -13,17 +13,17 @@ async function consumeMessages(io) {
                     for(const item of messages){
                         const result = await MessagesModel.MessageDatabase({input : item})
                         if(!result){
-                            throw new Error('Error al hacer el insert')
+                            throw new Error('Error inserting message into database')
                         }
-                        console.log('Emitiendo mensaje:', item);
+                        console.log('Sending message:', item);
                         io.emit('message', item)
                     }
                 } else {
                     const result= await MessagesModel.MessageDatabase({input : messages})
                     if(!result){
-                        throw new Error('Error al hacer el insert')
+                        throw new Error('Error inserting message into database')
                     }
-                    console.log('Emitiendo mensaje:', messages);
+                    console.log('Sending message:', messages);
                     io.emit('message', messages)
                 }
                 channel.ack(msg)

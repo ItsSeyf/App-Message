@@ -3,7 +3,7 @@ import { corsMiddleware } from './middlewares/cors.js';
 import {createServer} from 'node:http'
 import {Server} from 'socket.io'
 import {messagesRouter} from './routes/messages.js'
-import {consumeMessages} from './consumeMessages.js'
+import {consumeMessages} from './messages/consumeMessages.js'
 
 const app= express();
 const server=createServer(app);

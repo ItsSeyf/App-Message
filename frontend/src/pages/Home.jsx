@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as Material from '@mui/material';
-import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+import {getMessages} from '../services/messages.js'
+import {socket} from '../services/messages.js'
 
 export default function Home() {
     const [cargando, setCargando] = useState(false);
@@ -19,20 +20,8 @@ export default function Home() {
     useEffect(() => {
         (async()=>{
             setCargando(true);
-            if (usuario !== 'admin') {
-                const respuesta = await fetch(`http://localhost:1234/messages?username=${usuario}`)
-                if(respuesta.ok){
-                    const data = await respuesta.json()
-                    setMensajes(data)
-                    setCargando(false);
-                    return
-                }
-                setError(true);
-                setMensajeError('Error en la respuesta del servidor a la hora de obtener los mensajes')
-                setCargando(false);
-                console.error(mensajeError)
-            } else {
-                const respuesta = await fetch('http://localhost:1234/messages')
+            if (usuario !== undefined && usuario !== null) {
+                const respuesta = await getMessages(usuario);
                 if(respuesta.ok){
                     const data = await respuesta.json()
                     setMensajes(data)
@@ -46,7 +35,6 @@ export default function Home() {
             }
         }) ()
         console.log('Conectando al servidor de Socket.IO...')
-        const socket = io("http://localhost:1234")
 
         socket.on('connect', () => {
             console.log('Conectado al servidor de Socket.IO');
@@ -56,7 +44,7 @@ export default function Home() {
             console.error('Error de conexión:', err);
         });
         socket.on('message', (mensaje) => {
-            if(mensaje.receiver !== usuario && usuario !== 'admin' && mensaje.sender !== usuario){
+            if(mensaje.receiver !== usuario && mensaje.sender !== usuario){
                 console.log('Mensaje ignorado, no es para este usuario.');
                 return
             }

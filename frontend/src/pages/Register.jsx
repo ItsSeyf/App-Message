@@ -1,9 +1,12 @@
 import { useState } from "react";
 import * as Material from "@mui/material";
+import { registerUser } from  '../services/messages.js'
 
 export default function Register() {
     const [errorUsuario, setErrorUsuario]=useState(false);
     const [errorContra, setErrorContra]=useState(false);
+    const [errorname , setErrorName]= useState(false);
+    const [errornamemensaje , setErrorNamemensaje]= useState('');
     const [errormensajeUsuario, setErrorMensajeUsuario]=useState('');
     const [errormensajeContra, setErrorMensajeContra]=useState('');
     const [cargando, setCargando]=useState(false);
@@ -11,6 +14,12 @@ export default function Register() {
         let valido=true;
         const usuario= document.getElementById('user');
         const contra= document.getElementById('pass');
+        const name = document.getElementById('name');
+        if(name.value === undefined || name.value.length < 2){
+            setErrorName(true);
+            setErrorNamemensaje('El nombre debe de tener al menos 2 caracteres');
+            valido=false;
+        }
         if(usuario.value.length < 2){
             setErrorUsuario(true);
             setErrorMensajeUsuario('El usuario debe de tener al menos 5 caracteres');
@@ -35,26 +44,25 @@ export default function Register() {
         const data= new FormData(form);
         const usuario = data.get('user')
         const contra = data.get('pass')
+        const name = data.get('name')
         try{
-            const respuesta = await fetch('http://localhost:1234/messages/register', {
-                method : 'POST',
-                headers : {
-                    'Content-Type': 'application/json'
-                },
-                body : JSON.stringify({
-                    username: usuario,
-                    password: contra
-                })
-        })
-        if(respuesta.ok){
+            const respuesta = await registerUser({username: usuario, password: contra, name})
+        if(respuesta.statusCode === 201){
             setCargando(false);
             sessionStorage.setItem('user', JSON.stringify(usuario))
             form.reset()
             window.location.href='/Home'
-            return
+            return;
+        }else if (respuesta.statusCode === 404){
+            setCargando(false);
+            setErrorUsuario(true);
+            setErrorMensajeUsuario('Ese usuario ya existe');
+            return;
         }
-        throw new Error('Error en la respuesta del servidor')
-
+        setCargando(false);
+        setErrorUsuario(true);
+        setErrorMensajeUsuario('Error en el servidor, intentalo mas tarde');
+        console.error(respuesta);
         }catch(error){
             setCargando(false);
             console.error('Error en la solicitud:', error)
@@ -67,6 +75,19 @@ export default function Register() {
             </Material.Typography>
             <Material.Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Material.FormControl>
+                    <Material.FormLabel htmlFor="user">
+                        Nombre
+                    </Material.FormLabel>
+                    <Material.TextField
+                    autoComplete="name"
+                    name="name"
+                    required
+                    fullWidth
+                    id="name"
+                    placeholder="Pepe Perez"
+                    error={errorname}
+                    helperText={errornamemensaje}
+                    color={errorUsuario ? 'error' : 'primary'}/>
                     <Material.FormLabel htmlFor="user">
                         Nombre de usuario
                     </Material.FormLabel>
