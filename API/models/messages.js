@@ -14,8 +14,16 @@ const db=createClient({
 
 await db.execute('Create table if not exists users ( id integer primary key autoincrement,username Varchar(100), name varchar(50), password text)')
 
+await db.execute('Create if not exists unique index I_username on users(username)')
+
 await db.execute(
     'Create table if not exists messages ( id integer primary key autoincrement,sender Varchar(100), receiver varchar(100), messages text, created_at text)')
+
+await db.execute(
+    'Create table if not exists blocked ( id integer primary key autoincrement, username varchar(100), blocked_user varchar(100), constraint fk_blocked foreign key (username, blocked_user) references users(username) )')
+
+await db.execute(
+    'Create table if not exists  ( id integer primary key autoincrement,  )')
 
 export class MessagesModel{
     static async getALL( {username} ){
