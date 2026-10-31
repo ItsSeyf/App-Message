@@ -35,7 +35,7 @@ await db.execute(
 await db.execute(
     'Create table if not exists agenda ( id integer primary key autoincrement, username varchar(100), person varchar(100), constraint fk_agenda foreign key(username, person) references users(username))')
 await db.execute(
-    'Create table if not exists  ( id integer primary key autoincrement,  )')
+    'Create table if not exists blocked ( id integer primary key autoincrement, username varchar(100), blocked_user varchar(100))')
 
 export class MessagesModel {
     static async getALL({ input }) {
