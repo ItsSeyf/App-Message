@@ -1,12 +1,7 @@
 import { createClient } from "@libsql/client"
-import dotenv from 'dotenv'
 import { connection } from '../config/config.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-
-dotenv.config();
 const queue = 'MessageQueue';
 const { channel } = await connection(queue);
 

@@ -1,7 +1,4 @@
 import amqp from 'amqplib'
-import dotenv from 'dotenv'
-
-dotenv.config();
 async function connection(queue) {
     try{
     const connection = await amqp.connect(dotenv.env.URL_RABBIT);

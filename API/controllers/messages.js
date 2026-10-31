@@ -1,16 +1,4 @@
 import { MessagesModel } from '../models/messages.js'
-import cookieParser from 'cookie-parser'
-import SECRET_KEY from '../config/config.js'
-
-const token = (input) => {
-    try {
-        const token = input.cookies.access_token
-        const data = jwt.verify(token, SECRET_KEY);
-        return data;
-    } catch (e) {
-        return null;
-    }
-}
 
 const clearCookie = (res) => {
     res.clearCookie('access_token')

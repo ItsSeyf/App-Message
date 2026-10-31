@@ -16,7 +16,7 @@ async function consumeMessages(io) {
                             throw new Error('Error inserting message into database')
                         }
                         console.log('Sending message:', item);
-                        io.emit('message', item)
+                        io.to(`user:${messages.receiver}`).emit('message', messages);
                     }
                 } else {
                     const result= await MessagesModel.MessageDatabase({input : messages})
@@ -24,7 +24,7 @@ async function consumeMessages(io) {
                         throw new Error('Error inserting message into database')
                     }
                     console.log('Sending message:', messages);
-                    io.emit('message', messages)
+                    io.to(`user:${messages.receiver}`).emit('message', messages);
                 }
                 channel.ack(msg)
             }catch(e){
