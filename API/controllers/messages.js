@@ -73,6 +73,34 @@ export class MessagesController {
     static async logout(req, res) {
         res.clearCookie('access_token').json({ message: 'Logout successful' })
     }
+    static async createAgenda(req, res) {
+        const data = token(req);
+        if (data === null){
+            clearCookie(res);
+            return res.status(401).json({ error: 'Error invalid token' })
+        }
+        const {username} = data;
+        const {receiver} = req.body;
+        const result = await MessagesModel.createAgenda({input: {username, receiver}})
+        if(result === null){
+            return res.status(404).json({ error: 'User not added to agenda'})
+        }
+        return res.status(200).json({message: 'User added to agenda'})
+    }
+
+    static async getAgenda(req, res){
+        const data = token(req);
+        if (data === null){
+            clearCookie(res);
+            return res.status(401).json({ error: 'Error invalid token' })
+        }
+        const {username} = data;
+        const result = await MessagesModel.getAgenda({input: {username}})
+        if(result === null){
+            return res.status(404).json({ error: 'Agenda not founded'})
+        }
+        return res.status(200).json(result)
+    }
 
     static async block(req, res) {
         const data = token(req);

@@ -112,7 +112,7 @@ export class MessagesModel {
         }
     }
     static async createAgenda({ input }) {
-        const { username } = input
+        const { username, receiver } = input
         try {
             const isblocked = await db.execute({
                 sql: 'select * from blocked where (username = :username and blocked_user = :receiver) or (username = :receiver and blocked_user = :username)',
@@ -143,8 +143,8 @@ export class MessagesModel {
             if (!valid) {
                 return null;
             }
-            const token = token({ input: { username: usuario.rows[0].username, id: usuario.rows[0].id } });
-            return token;
+            const createdtoken = token({ input: { username: usuario.rows[0].username, id: usuario.rows[0].id } });
+            return createdtoken;
         } catch (e) {
             console.error(e)
             return null;
@@ -190,11 +190,11 @@ export class MessagesModel {
                 sql: 'select id, username, password from users where username = :username',
                 args: { username: username }
             })
-            const token = token({ input: { username: user.rows[0].username, id: user.rows[0].id } });
+            const createdtoken = token({ input: { username: user.rows[0].username, id: user.rows[0].id } });
             if (result === undefined || result === null) {
                 return null;
             }
-            result.token = token;
+            result.token = createdtoken;
             return result;
         } catch (e) {
             console.error(e)
