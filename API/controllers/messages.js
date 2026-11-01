@@ -1,28 +1,15 @@
 import { MessagesModel } from '../models/messages.js'
 
-const clearCookie = (res) => {
-    res.clearCookie('access_token')
-}
-
 export class MessagesController {
     static async getALL(req, res) {
-        const data = token(req);
-        if (data === null) {
-            clearCookie(res);
-            return res.status(401).json({ error: 'Error invalid token' })
-        }
-        const { username } = data;
+        const { username } = req.user;
         const { receiver } = req.query;
         const messages = await MessagesModel.getALL({ input: { username, receiver } })
         res.status(200).json(messages)
     }
     static async createMessage(req, res) {
-        const data = token(req);
-        if (data === null) {
-            clearCookie(res);
-            return res.status(401).json({ error: 'Error invalid token' })
-        }
-        const message = await MessagesModel.create({ input: req.body })
+        const { username } = req.user;
+        const message = await MessagesModel.create({ input: { ...req.body, username } })
         if (!message) {
             return res.status(404).json({ error: 'Message not created' })
         }
@@ -51,7 +38,7 @@ export class MessagesController {
         if (!user) {
             return res.status(404).json({ error: 'User not created' })
         }
-        res.status(201).json(user).cookie('access_token', user.token, {
+        res.status(201).cookie('access_token', user.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
@@ -62,27 +49,17 @@ export class MessagesController {
         res.clearCookie('access_token').json({ message: 'Logout successful' })
     }
     static async createAgenda(req, res) {
-        const data = token(req);
-        if (data === null){
-            clearCookie(res);
-            return res.status(401).json({ error: 'Error invalid token' })
-        }
-        const {username} = data;
-        const {receiver} = req.body;
-        const result = await MessagesModel.createAgenda({input: {username, receiver}})
-        if(result === null){
-            return res.status(404).json({ error: 'User not added to agenda'})
+        const { username } = req.user;
+        const { receiver } = req.body;
+        const result = await MessagesModel.createAgenda({ input: { username, receiver } })
+        if (result === null) {
+            return res.status(404).json({ error: 'User not added to agenda' })
         }
         return res.status(200).json({message: 'User added to agenda'})
     }
 
     static async getAgenda(req, res){
-        const data = token(req);
-        if (data === null){
-            clearCookie(res);
-            return res.status(401).json({ error: 'Error invalid token' })
-        }
-        const {username} = data;
+        const {username} = req.user;
         const result = await MessagesModel.getAgenda({input: {username}})
         if(result === null){
             return res.status(404).json({ error: 'Agenda not founded'})
@@ -91,12 +68,7 @@ export class MessagesController {
     }
 
     static async block(req, res) {
-        const data = token(req);
-        if (data === null) {
-            clearCookie(res);
-            return res.status(401).json({ error: 'Error invalid token' })
-        }
-        const { username } = data;
+        const { username } = req.user;
         const { blocked } = req.body;
         const result = await MessagesModel.block({ input: { username, blocked } });
         if (result === null) {
