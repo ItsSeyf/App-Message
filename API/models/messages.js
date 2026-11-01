@@ -69,26 +69,12 @@ export class MessagesModel {
                     created_at: fecha
                 }
             })
+            if(result === undefined || result === null){
+                return null;
+            }
             channel.sendToQueue(queue, Buffer.from(JSON.stringify(mensaje)), {
                 persistent: true,
             });
-            return result ? 'ok' : null
-        } catch (e) {
-            console.error(e)
-        }
-    }
-    static async MessageDatabase({ input }) {
-        const { sender, receiver, messages, created_at } = input
-        try {
-            let result = await db.execute({
-                sql: 'insert into messages(sender, receiver, messages, created_at) values(:sender, :receiver, :msg, :created_at)',
-                args: {
-                    sender,
-                    receiver,
-                    msg: messages,
-                    created_at
-                }
-            })
             return result ? 'ok' : null
         } catch (e) {
             console.error(e)
@@ -113,7 +99,7 @@ export class MessagesModel {
                 sql: 'select * from blocked where (username = :username and blocked_user = :receiver) or (username = :receiver and blocked_user = :username)',
                 args: { username, receiver }
             })
-            if (blocked.rows.length > 0) {
+            if (isblocked.rows.length > 0) {
                 return null;
             }
             const result = await db.execute({

@@ -1,5 +1,4 @@
 import {connection} from '../config/config.js'
-import {MessagesModel} from '../models/messages.js'
 
 async function consumeMessages(io) {
     const queue = 'MessageQueue';
@@ -11,24 +10,18 @@ async function consumeMessages(io) {
                 const messages = JSON.parse(content)
                 if (Array.isArray(messages)) {
                     for(const item of messages){
-                        const result = await MessagesModel.MessageDatabase({input : item})
-                        if(!result){
-                            throw new Error('Error inserting message into database')
-                        }
                         console.log('Sending message:', item);
                         io.to(`user:${messages.receiver}`).emit('message', messages);
                     }
                 } else {
-                    const result= await MessagesModel.MessageDatabase({input : messages})
-                    if(!result){
-                        throw new Error('Error inserting message into database')
-                    }
                     console.log('Sending message:', messages);
                     io.to(`user:${messages.receiver}`).emit('message', messages);
                 }
                 channel.ack(msg)
             }catch(e){
-                console.error(e)
+                console.error(e);
+                channel.nack(msg, false, false);
+                return res.status(500).json({error: 'Error processing message'});
             }
         }
     })
