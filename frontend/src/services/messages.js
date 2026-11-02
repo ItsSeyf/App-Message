@@ -1,20 +1,21 @@
 import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
-const url = 'http://localhost:1234/messages';
+const url = 'http://localhost:1234/';
 
 export const registerUser = async (datos) => {
     try {
         const result = await fetch(`${url}/register`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(datos)
         })
-        return result;
+        return result.status=== 404 ? null : result;
     }
     catch (e) {
         console.error(e);
-        return { statusCode: 500, message: e }
+        return { status: 500, message: e }
     }
 }
 
@@ -22,24 +23,29 @@ export const loginUser = async (datos) => {
     try {
         const result = await fetch(`${url}/login`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(datos)
         })
-        return result;
+        return result.status=== 404 ? null : result;
     }
     catch (e) {
         console.error(e);
+        return { status: 500, message: e }
     }
 }
 
-export const getMessages = async (username) => {
+export const getMessages = async () => {
     try {
-        const result = await fetch(`${url}/?username=${username}`)
+        const result = await fetch(`${url}`,{
+            method: 'GET',
+            credentials: 'include'
+        })
         return result;
     } catch (e) {
-        return e;
+        return { status: 500, message: e }
     }
 }
 
@@ -52,6 +58,7 @@ export const socket = io("http://localhost:1234", {
 export const sendMessage = async (datos) => {
     const result = await fetch(`${url}`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },
@@ -62,4 +69,68 @@ export const sendMessage = async (datos) => {
             fecha: datos.fecha
         })
     })
+}
+
+export const Logout = async ()=>{
+    try{
+        await fetch(`${url}/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        })
+        return {status: 200}
+    }catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+export const getAgenda = async ()=>{
+    try{
+        const result = await fetch(`${url}/agenda`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        if(result.status === 404){
+            return null;
+        }
+        return result;
+    }catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const addAgenda =async (receiver)=>{
+    try{
+        const result = await fetch(`${url}/agenda`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ receiver })
+        })
+        return result.status === 404 ? null : result;
+    }
+    catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const blockUser = async (blocked)=>{
+    try{
+        const result = await fetch(`${url}/block`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ blocked })
+        })
+        return result.status === 404 ? null : result;
+    }
+    catch(e){
+        console.error(e);
+        return {status: 500}
+    }
 }

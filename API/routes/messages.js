@@ -12,7 +12,7 @@ messagesRouter.use(tokenisvalid);
 
 messagesRouter.get('/', MessagesController.getALL);
 
-messagesRouter.post('/message', MessagesController.createMessage);
+messagesRouter.post('/', MessagesController.createMessage);
 
 messagesRouter.post('/logout', MessagesController.logout);
 

@@ -6,6 +6,7 @@ import './App.css'
 
 const LazyLogin= lazy(()=> import('./pages/Login.jsx'))
 const LazyHome= lazy(()=> import('./pages/Home.jsx'))
+const LazyAgenda = lazy(()=> import('./pages/Agenda.jsx'))
 const LazyRegister= lazy(()=> import('./pages/Register.jsx'))
 const user= JSON.parse(sessionStorage.getItem('user') || null)
 
@@ -13,6 +14,10 @@ const appRoutes=[
   {
     path: '/Login',
     Component: LazyLogin
+  },
+  {
+    path: '/Agenda',
+    Component: LazyAgenda
   },
   {
     path: '/Register',
@@ -32,7 +37,8 @@ function App() {
           <Route path='/Login' Component={LazyLogin} />
           <Route path='/Register' Component={LazyRegister} />
           <Route path='/Home' Component={LazyHome} />
-          <Route path='/' Component={user ? LazyHome : LazyLogin} />
+          <Route path = '/Agenda' Component = {LazyAgenda} />
+          <Route path='/' Component={LazyHome} />
         </Router>
       </Suspense>
     </main>

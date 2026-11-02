@@ -60,6 +60,13 @@ export class MessagesModel {
             if (isblocked.rows.length > 0) {
                 return null;
             }
+            const isUserExists = await db.execute({
+                sql: 'select * from users where username = :username',
+                args: { username: receiver }
+            })
+            if(isUserExists.rows.length ===0){
+                return null;
+            }
             const result = await db.execute({
                 sql: 'insert into messages(sender, receiver, messages, created_at) values(:sender, :receiver, :msg, :created_at)',
                 args: {
@@ -83,7 +90,7 @@ export class MessagesModel {
     static async getAgenda({ username }) {
         try {
             const result = await db.execute({
-                sql: 'select person from agenda where username = :username',
+                sql: 'select users.username, users.name from agenda, users where agenda.username = :username and agenda.person = users.username',
                 args: { username }
             })
             return result ? result.rows : null
