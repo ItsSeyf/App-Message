@@ -57,6 +57,7 @@ export default function Home() {
     }, [])
     const validar = () => {
         let valido = true;
+        
         const mensaje = document.getElementById('mensaje');
         const receptor = document.getElementById('receptor');
         if (mensaje.value.length < 1) {
