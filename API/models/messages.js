@@ -106,11 +106,15 @@ export class MessagesModel {
                 sql: 'select * from blocked where (username = :username and blocked_user = :receiver) or (username = :receiver and blocked_user = :username)',
                 args: { username, receiver }
             })
-            if (isblocked.rows.length > 0) {
+            const isUserExists = await db.execute({
+                sql: 'select * from users where username = :receiver',
+                args: {receiver } 
+            })
+            if (isblocked.rows.length > 0 || isUserExists.rows.length ===0) {
                 return null;
             }
             const result = await db.execute({
-                sql: 'insert into agenda (username, person) values( :username, :person)',
+                sql: 'insert into agenda (username, person) values( :username, :person), (:person, :username)',
                 args: { username, person }
             })
             return result ? 'ok' : null;
@@ -186,6 +190,31 @@ export class MessagesModel {
             return result;
         } catch (e) {
             console.error(e)
+        }
+    }
+    static async unlockUser({ input}){
+        const {blocked, username} = input;
+        try{
+            const result = await db.execute({
+                sql: 'delete from blocked where blocked_user = :blocked and username = :username',
+                args: { blocked, username }
+            })
+            return result ? 'ok' : null;
+        } catch (e) {
+            console.error(e)
+            return null;
+        }
+    }
+    static async getBlockedUsers({username}){
+        try{
+            const result = await db.execute({
+                sql: 'select users.username, users.name from blocked, users where blocked.username = :username and blocked.blocked_user = users.username',
+                args: { username }
+            })
+            return result.rows;
+        } catch (e) {
+            console.error(e)
+            return null;
         }
     }
 }

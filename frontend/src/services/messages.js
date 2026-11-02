@@ -3,7 +3,7 @@ const url = 'http://localhost:1234/';
 
 export const registerUser = async (datos) => {
     try {
-        const result = await fetch(`${url}/register`, {
+        const response = await fetch(`${url}/register`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -11,6 +11,7 @@ export const registerUser = async (datos) => {
             },
             body: JSON.stringify(datos)
         })
+        const result = await response.json();
         return result.status=== 404 ? null : result;
     }
     catch (e) {
@@ -21,7 +22,7 @@ export const registerUser = async (datos) => {
 
 export const loginUser = async (datos) => {
     try {
-        const result = await fetch(`${url}/login`, {
+        const response = await fetch(`${url}/login`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -29,6 +30,7 @@ export const loginUser = async (datos) => {
             },
             body: JSON.stringify(datos)
         })
+        const result = await response.json();
         return result.status=== 404 ? null : result;
     }
     catch (e) {
@@ -39,10 +41,11 @@ export const loginUser = async (datos) => {
 
 export const getMessages = async () => {
     try {
-        const result = await fetch(`${url}`,{
+        const response = await fetch(`${url}`,{
             method: 'GET',
             credentials: 'include'
         })
+        const result = await response.json();
         return result;
     } catch (e) {
         return { status: 500, message: e }
@@ -56,19 +59,25 @@ export const socket = io("http://localhost:1234", {
 });
 
 export const sendMessage = async (datos) => {
-    const result = await fetch(`${url}`, {
+    try{
+        const response = await fetch(`${url}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            sender: datos.usuario,
             receiver: datos.receptor,
             messages: datos.mensaje,
             fecha: datos.fecha
         })
     })
+    const result = await response.json();
+    return result;
+    }catch(e){
+        console.error(e);
+        return {status: 500}
+    }
 }
 
 export const Logout = async ()=>{
@@ -83,12 +92,14 @@ export const Logout = async ()=>{
         return {status: 500}
     }
 }
+
 export const getAgenda = async ()=>{
     try{
-        const result = await fetch(`${url}/agenda`, {
+        const response = await fetch(`${url}/agenda`, {
             method: 'GET',
             credentials: 'include'
         })
+        const result = await response.json();
         if(result.status === 404){
             return null;
         }
@@ -101,7 +112,7 @@ export const getAgenda = async ()=>{
 
 export const addAgenda =async (receiver)=>{
     try{
-        const result = await fetch(`${url}/agenda`, {
+        const response = await fetch(`${url}/agenda`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -109,6 +120,7 @@ export const addAgenda =async (receiver)=>{
             },
             body: JSON.stringify({ receiver })
         })
+        const result = await response.json();
         return result.status === 404 ? null : result;
     }
     catch(e){
@@ -119,7 +131,7 @@ export const addAgenda =async (receiver)=>{
 
 export const blockUser = async (blocked)=>{
     try{
-        const result = await fetch(`${url}/block`, {
+        const response = await fetch(`${url}/block`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -127,9 +139,43 @@ export const blockUser = async (blocked)=>{
             },
             body: JSON.stringify({ blocked })
         })
+        const result = await response.json();
         return result.status === 404 ? null : result;
     }
     catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const unblockUser = async (blocked)=>{
+    try{
+        const response = await fetch(`${url}/unblock`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ blocked })
+        })
+        const result = await response.json();
+        return result.status === 404 ? null : result;
+    }
+    catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const getBlockedUsers = async () =>{
+    try{
+        const response = await fetch(`${url}/blocked`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        const result = await response.json();
+        return result.status === 404 ? null : result;
+    } catch(e){
         console.error(e);
         return {status: 500}
     }

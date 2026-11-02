@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
 import * as Material from '@mui/material';
-import { getMessages } from '../services/messages.js'
 import { socket } from '../services/messages.js'
+import { getMessages, sendMessage,Logout } from '../services/messages.js'
 
 export default function Home() {
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState(false);
     const [mensajeError, setMensajeError] = useState('');
-    const [errorMesanje, setErrorMensaje] = useState(false);
-    const [errorMesanjetext, seterrorMesanjetext] = useState('');
-    const [errorReceptor, seterrorReceptor] = useState(false);
-    const [mensajeErrorReceptor, setmensajeErrorReceptor] = useState('');
     const [mensajes, setMensajes] = useState([]);
     useEffect(() => {
         (async () => {
@@ -55,69 +51,38 @@ export default function Home() {
             socket.disconnect();
         }
     }, [])
-    const validar = () => {
-        let valido = true;
-        
-        const mensaje = document.getElementById('mensaje');
-        const receptor = document.getElementById('receptor');
-        if (mensaje.value.length < 1) {
-            setErrorMensaje(true);
-            seterrorMesanjetext('El mensaje no puede estar vacio')
-            valido = false;
-        }
-        else if (receptor.value.length < 1) {
-            seterrorReceptor(true);
-            setmensajeErrorReceptor('El receptor no puede estar vacio')
-            valido = false;
-        }
-        return valido;
-    }
     const handleSubmit = async (event) => {
         setCargando(true);
-        if (errorMesanje || errorReceptor) {
-            event.preventDefault();
-            setCargando(false);
-            return;
-        }
         event.preventDefault();
         const form = event.currentTarget;
         const data = new FormData(form);
         const mensaje = data.get('mensaje')
         const receptor = data.get('receptor')
         const fecha = new Date().toISOString()
-        try {
-            const respuesta = await fetch('http://localhost:1234/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sender: usuario,
-                    receiver: receptor,
-                    messages: mensaje,
-                    fecha: fecha
-                })
-            })
-            if (respuesta.ok) {
-                setCargando(false);
-                setMensajes((prevMensajes) => [...prevMensajes, {
-                    sender: usuario,
-                    receiver: receptor,
-                    messages: mensaje,
-                    created_at: fecha
-                }])
-                form.reset()
-                return
-            }
-            throw new Error('Error en la respuesta del servidor')
-
-        } catch (error) {
+        const respuesta = await sendMessage({ receiver: receptor, messages: mensaje, fecha: fecha });
+        if (respuesta === 500) {
             setCargando(false);
-            console.error('Error en la solicitud:', error)
+            setError(true);
+            setMensajeError('Server error while sending message. Try again later.');
+            return;
+        } else if (respuesta.status === 404) {
+            setCargando(false);
+            setError(true);
+            setMensajeError('Message not sent. Please try again.');
+            return;
         }
+        setCargando(false);
+        setMensajes((prevMensajes) => [...prevMensajes, {
+            sender: usuario,
+            receiver: receptor,
+            messages: mensaje,
+            created_at: fecha
+        }])
+        form.reset()
+        return
     }
-    const cerrarSesion = () => {
-        sessionStorage.clear()
+    const cerrarSesion = async() => {
+        await Logout();
         window.location.href = '/Login'
     }
     return (

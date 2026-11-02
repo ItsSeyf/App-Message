@@ -22,3 +22,7 @@ messagesRouter.post('/agenda', MessagesController.createAgenda);
 
 messagesRouter.post('/block', MessagesController.block);
 
+messagesRouter.post('/unblock', MessagesController.unblock);
+
+messagesRouter.get('/blocked', MessagesController.getBlocked);
+

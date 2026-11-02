@@ -72,4 +72,18 @@ export class MessagesController {
         }
         return res.status(200).json({ message: 'User blocked successfully' })
     }
+    static async unblock(req, res) {
+        const {username } = req.user.username;
+        const { blocked } = req.body;
+        const result = await MessagesModel.unblock({ input: { username, blocked } });
+        if( result === null){
+            return res.status(500).json({ error: 'User not unblocked' })
+        }
+        return res.status(200).json({ message: 'User unblocked successfully' })
+    }
+    static async getBlocked(req, res){
+        const { username } = req.user.username;
+        const result = await MessagesModel.getBlocked({ input: { username } });
+        return res.status(200).json(result)
+    }
 }
