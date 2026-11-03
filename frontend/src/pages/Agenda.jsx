@@ -1,70 +1,37 @@
-import { useState, useEffect } from 'react';
-import { getAgenda, addAgenda } from '../services/messages.js'
+import {
+    Alert,
+    AlertTitle,
+    Box,
+    Button,
+    Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    FormControl,
+    FormLabel,
+    TextField,
+    Typography
+} from '@mui/material';
+import { useAgenda } from '../hooks/useAgenda.js';
+import { navigate } from '../components/Link.jsx';
 
 export default function Agenda() {
-    const [agenda, setAgenda] = useState([]);
-    const [error, setError] = useState(false);
-    const [cargando, setCargando] = useState(false);
-    const [mensajeError, setMensajeError] = useState('');
-    useEffect(() => {
-        (async () => {
-            setCargando(true);
-            const result = await getAgenda();
-            if (result === 500) {
-                setError(true);
-                setMensajeError('Server error while getting agenda. Try again later.');
-                setCargando(false);
-                return;
-            } else if (result.status === 401) {
-                setCargando(false);
-                window.location.href = '/'
-                return;
-            }
-            setAgenda(result);
-            setCargando(false);
-        })
-    }, [])
-    const handleSubmit = async (event) => {
-        setCargando(true);
-        event.preventDefault();
-        const data = new FormData(event.target);
-        const receiver = data.get('receiver');
-        const result = await addAgenda(receiver);
-        if (result.status === 404) {
-            setError(true);
-            setMensajeError('User not found. Cannot add to agenda.');
-            setCargando(false);
-        } else if (result.status === 500) {
-            setError(true);
-            setMensajeError('Server error while adding to agenda. Try again later.');
-            setCargando(false);
-        }
-        setCargando(false);
-        return result;
-    }
-    const removeFromAgenda = async (receiver)=>{
-        setCargando(true);
-        const result = await fetch(`${url}/agenda`, {
-            method: 'DELETE',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ receiver })
-        })
-        setCargando(false);
-    }
-    return (
-        <Material.Container sx={{ display: 'flex', flexDirection: 'row', gap: 2, height: '92vh', padding: 2 }}>
 
-            <Material.Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Material.Typography component="h1" variant="h5">
+    const { agenda, error, cargando, mensajeError, handleSubmit, removeFromAgenda,closeAlert} = useAgenda();
+
+    return (
+        <Container sx={{ display: 'flex', flexDirection: 'row', gap: 2, height: '92vh', padding: 2 }}>
+
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography component="h1" variant="h5">
                     Add user to Agenda
-                </Material.Typography>
-                <Material.Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Material.FormControl>
-                        <Material.FormLabel htmlFor="receiver">Username</Material.FormLabel>
-                        <Material.TextField
+                </Typography>
+                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <FormControl>
+                        <FormLabel htmlFor="receiver">Username</FormLabel>
+                        <TextField
                             id="receiver"
                             name="receiver"
                             placeholder="Enter username"
@@ -72,20 +39,20 @@ export default function Agenda() {
                             color='primary'
                             required
                         />
-                    </Material.FormControl>
-                    <Material.Button
+                    </FormControl>
+                    <Button
                         type="submit"
                         variant="contained"
                         color="primary"
                         disabled={cargando}
                     >
                         {cargando ? 'Adding to Agenda...' : 'Add to Agenda'}
-                    </Material.Button>
-                </Material.Box>
-                <Material.Divider />
-            </Material.Box>
+                    </Button>
+                </Box>
+                <Divider />
+            </Box>
 
-            <Material.Box
+            <Box
                 sx={{
                     flex: 2,
                     overflowY: 'auto',
@@ -95,12 +62,12 @@ export default function Agenda() {
                     maxHeight: '80vh'
                 }}
             >
-                <Material.Typography component="h1" variant="h5">
+                <Typography component="h1" variant="h5">
                     Agenda
-                </Material.Typography>
+                </Typography>
                 {agenda.length > 0 ? (
                     agenda.map((person, index) => (
-                        <Material.Box
+                        <Box
                             key={index}
                             sx={{
                                 marginBottom: 2,
@@ -111,28 +78,55 @@ export default function Agenda() {
                                 color: '#333333'
                             }}
                         >
-                            <Material.Typography variant="body2" sx={{ marginTop: 1 }}>
+                            <Typography variant="body2" sx={{ marginTop: 1 }}>
                                 {person.name}
-                            </Material.Typography>
-                            <Material.Typography variant="body2" sx={{ marginTop: 1 }}>
+                            </Typography>
+                            <Typography variant="body2" sx={{ marginTop: 1 }}>
                                 {person.username}
-                            </Material.Typography>
-                            <Material.Button
-                            onclick={()=> removeFromAgenda(person.username)}
+                            </Typography>
+                            <Button
+                                onClick={() => navigate(`/Home/${encodeURIComponent(person.username)}`)}
+                                variant="contained"
+                                color="secondary"
+                                disabled={cargando}
+                            >
+                                {cargando ? 'Wait...' : 'Open Chat'}
+                            </Button>
+                            <Button
+                                onClick={() => removeFromAgenda(person.username)}
                                 variant="contained"
                                 color="secondary"
                                 disabled={cargando}
                             >
                                 {cargando ? 'Blocking...' : 'Block User'}
-                            </Material.Button>
-                        </Material.Box>
+                            </Button>
+                        </Box>
                     ))
                 ) : (
-                    <Material.Typography variant="body2" color="textSecondary">
+                    <Typography variant="body2" color="textSecondary">
                         Empty agenda.
-                    </Material.Typography>
+                    </Typography>
                 )}
-            </Material.Box>
-        </Material.Container>
+            </Box>
+            <Dialog
+                open={error}
+                onClose={closeAlert}
+                aria-labelledby="error-dialog-title"
+                aria-describedby="error-dialog-description"
+            >
+                <DialogTitle id="error-dialog-title">An error occurred</DialogTitle>
+                <DialogContent>
+                    <Alert severity="error" sx={{ mt: 1 }}>
+                        <AlertTitle>Error</AlertTitle>
+                        <span id="error-dialog-description">{mensajeError}</span>
+                    </Alert>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeAlert} variant="contained" color="error" autoFocus>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Container>
     )
 }

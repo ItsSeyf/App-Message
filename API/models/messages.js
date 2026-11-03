@@ -156,6 +156,7 @@ export class MessagesModel {
 
             return result && deleteFromAgenda ? 'ok' : null;
         } catch (e) {
+            console.error(e);
             return null;
         }
     }
