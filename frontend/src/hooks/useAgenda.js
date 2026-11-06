@@ -42,6 +42,11 @@ export function useAgenda() {
             setError(true);
             setMensajeError('Server error while adding to agenda. Try again later.');
             setCargando(false);
+        }else if (respuesta.status === 401) {
+            setCargando(false);
+            form.reset();
+            window.location.href = '/Login'
+            return
         }
         const newagenda = await getAgenda();
         setAgenda(newagenda);

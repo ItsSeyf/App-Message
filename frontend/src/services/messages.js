@@ -183,3 +183,17 @@ export const getBlockedUsers = async () =>{
         return {status: 500}
     }
 }
+
+export const editMessage = async (data)=>{
+    try{
+        const response = await fetch(`${url}/`,{
+            method: 'PATCH',
+            credentials: 'include'
+        })
+        const result = await response.json();
+        return result.status === 500 ? null: result;
+    }catch (e){
+        console.error(e);
+        return {status: 500}
+    }
+}

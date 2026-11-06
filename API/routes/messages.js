@@ -1,12 +1,17 @@
 import { Router } from "express";
 import {MessagesController} from "../controllers/messages.js";
 import {tokenisvalid} from "../middlewares/cors.js"
+import { MessagesModel } from "../models/messages.js";
 
 export const messagesRouter=Router();
 
 messagesRouter.post('/login', MessagesController.login);
 
 messagesRouter.post('/register', MessagesController.register);
+
+messagesRouter.get('/reset', MessagesModel.getResetlink)
+
+messagesRouter.post('/reset', MessagesModel.resetpassword)
 
 messagesRouter.use(tokenisvalid);
 
@@ -26,3 +31,6 @@ messagesRouter.post('/unblock', MessagesController.unblock);
 
 messagesRouter.get('/blocked', MessagesController.getBlocked);
 
+messagesRouter.patch('/', MessagesController.editMessage)
+
+messagesRouter.delete('/', MessagesController.delteMessage)

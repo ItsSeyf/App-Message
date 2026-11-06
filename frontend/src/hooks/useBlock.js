@@ -41,6 +41,11 @@ export function useBlock(){
             setMensajeError('Server error while unblocking user. Try again later.');
             setCargando(false);
             return;
+        }else if (respuesta.status === 401) {
+            setCargando(false);
+            form.reset();
+            window.location.href = '/Login'
+            return
         }
         setBlockedUsers(blockedUsers.filter(user => user.username !== username))
         setCargando(false);

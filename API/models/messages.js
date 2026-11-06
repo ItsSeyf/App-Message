@@ -2,6 +2,8 @@ import { createClient } from "@libsql/client"
 import { connection } from '../config/config.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken';
+import { Resend } from 'resend';
+
 const queue = 'MessageQueue';
 const { channel } = await connection(queue);
 
@@ -40,7 +42,7 @@ export class MessagesModel {
                     sql: 'select sender, name, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
                     args: { username: input.username, receiver: input.receiver }
                 })
-                return result.rows.length >0 ? result.rows : null
+                return result.rows.length > 0 ? result.rows : null
             }
             return null;
         } catch (e) {
@@ -127,9 +129,9 @@ export class MessagesModel {
         try {
             const result = await db.execute({
                 sql: 'select login_failed from users where username = :username',
-                args: {username: username}
+                args: { username: username }
             })
-            if(result.rows[0].login_failed >=5){
+            if (result.rows[0].login_failed >= 5) {
                 return 0;
             }
             const usuario = await db.execute({
@@ -141,7 +143,7 @@ export class MessagesModel {
             if (!valid) {
                 const result = await db.execute({
                     sql: 'update users set login_failed = login_failed + 1 where username = :username',
-                    args: {username: username}
+                    args: { username: username }
                 })
                 return null;
             }
@@ -245,7 +247,7 @@ export class MessagesModel {
                 sql: 'update messages set message = :message where id = :id',
                 args: { message, id: result.rows[0].id }
             })
-            if(!update || update.rowsAffected ===0){
+            if (!update || update.rowsAffected === 0) {
                 return null;
             }
             return 'ok';
@@ -254,48 +256,80 @@ export class MessagesModel {
             return null;
         }
     }
-    static async deleteMessage ({input}){
-        try{
-            const {username} = input;
-            const {data} = input;
+    static async deleteMessage({ input }) {
+        try {
+            const { username } = input;
+            const { data } = input;
 
             const result = await db.execute({
                 sql: 'select id from messages where sender = :username and message= :message',
-                args: {username, message: data.message}
+                args: { username, message: data.message }
             })
-            if(!result || result.rowsAffected===0){
+            if (!result || result.rowsAffected === 0) {
                 return null;
             }
             const remove = await db.execute({
                 sql: 'delete from messages where id = :id',
-                args: {id: result.rows[0].id}
+                args: { id: result.rows[0].id }
             })
-            if(!remove || remove.rowsAffected===0){
+            if (!remove || remove.rowsAffected === 0) {
                 return null;
             }
             return 'ok'
-        }catch(e){
+        } catch (e) {
             console.error(e);
             return null;
         }
     }
-    static async resetPassword({ username }) {
+    static async getResetlink({ username }) {
         try {
             const result = await db.execute({
-                sql: 'select id from users where username = :username',
-                args: {username}
+                sql: 'select id, email from users where username = :username',
+                args: { username }
             })
-            if(result.rows.length ===0){
+            if (result.rows.length === 0) {
                 return null;
             }
             const token = jwt.sign({
                 user_id: result.rows[0].id,
                 type: "password_reset"
-            }, process.env.SECRET_KEY ,{
+            }, process.env.SECRET_KEY, {
                 expiresIn: '15m'
             }
             )
+            const resend = new Resend(process.env.URL_RESEND)
+            const {data, error} = resend.emails.send({
+                from: 'onboarding@resend.dev',
+                to: result.rows[0].email,
+                subject: 'Password Reset',
+                html: `<a href=${token}><strong>Click on this to reset your password!</strong>!</a> </br> <p><strong> This link is available for only 15 minutes</strong></p> `
+            })
+            if(error){
+                console.error(error);
+                return null;
+            }
+            console.log(data);
+            return 1;
         } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+    static async resetpassword({input}){
+        const {token, password} = input;
+        try{
+            const data= jwt.verify(token, process.env.SECRET_RESET)
+            const {id} = data;
+            const hashedpassword = await bcrypt.hash(password, 10)
+            const result = await db.execute({
+                sql: 'update users set password= :hashedpassword where id = :id',
+                args: {hashedpassword, id}
+            })
+            if(!result || result.rows.length===0){
+                return null;
+            }
+            return 1;
+        }catch(e){
             console.error(e);
             return null;
         }

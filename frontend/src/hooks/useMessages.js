@@ -59,11 +59,16 @@ export function useMessages() {
             setError(true);
             setMensajeError('Server error while sending message. Try again later.');
             return;
-        } else if (respuesta.status === 404) {
+        } else if (respuesta === 404) {
             setCargando(false);
             setError(true);
             setMensajeError('Message not sent. Please try again.');
             return;
+        } else if (respuesta.status === 401) {
+            setCargando(false);
+            form.reset();
+            window.location.href = '/Login'
+            return
         }
         setCargando(false);
         setMensajes((prevMensajes) => [...prevMensajes, {
@@ -84,5 +89,5 @@ export function useMessages() {
         setMensajeError('');
     }
 
-    return { cargando, error, mensajeError, mensajes, handleSubmit, cerrarSesion, closeAlert}
+    return { cargando, error, mensajeError, mensajes, handleSubmit, cerrarSesion, closeAlert }
 }
