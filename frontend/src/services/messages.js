@@ -31,6 +31,9 @@ export const loginUser = async (datos) => {
             body: JSON.stringify(datos)
         })
         const result = await response.json();
+        if(result.status === 403){
+            return 1;
+        }
         return result.status=== 404 ? null : result;
     }
     catch (e) {

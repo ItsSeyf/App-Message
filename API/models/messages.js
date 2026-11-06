@@ -17,9 +17,11 @@ const token = (input) => {
         { expiresIn: '24h' });
 }
 
-await db.execute('Create table if not exists users ( id integer primary key autoincrement,username Varchar(100), name varchar(50), password text)')
+await db.execute('Create table if not exists users ( id integer primary key autoincrement,username Varchar(100), name varchar(50), password text, email text, login_failed integer default 0, resets integer default 0)')
 
 await db.execute('Create if not exists unique index I_username on users(username)')
+
+await db.execute('Create table if not exists password_reset (token_hash text primary key, username varchar(100), expires_at text, constraint fk_reset_password foreign key(username) references users(username))')
 
 await db.execute(
     'Create table if not exists messages ( id integer primary key autoincrement,sender Varchar(100), receiver varchar(100), messages text, created_at text)')
@@ -29,8 +31,6 @@ await db.execute(
 
 await db.execute(
     'Create table if not exists agenda ( id integer primary key autoincrement, username varchar(100), person varchar(100), constraint fk_agenda foreign key(username, person) references users(username))')
-await db.execute(
-    'Create table if not exists blocked ( id integer primary key autoincrement, username varchar(100), blocked_user varchar(100))')
 
 export class MessagesModel {
     static async getALL({ input }) {
@@ -40,8 +40,7 @@ export class MessagesModel {
                     sql: 'select sender, name, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
                     args: { username: input.username, receiver: input.receiver }
                 })
-                const messages = result.rows
-                return result ? messages : null
+                return result.rows.length >0 ? result.rows : null
             }
             return null;
         } catch (e) {
@@ -50,7 +49,7 @@ export class MessagesModel {
         }
     }
     static async create({ input }) {
-        const { sender, receiver, messages, fecha } = input
+        const { sender, receiver, messages, fecha } = input.data
         const mensaje = { sender, receiver, messages, fecha }
         try {
             const isblocked = await db.execute({
@@ -64,7 +63,7 @@ export class MessagesModel {
                 sql: 'select * from users where username = :username',
                 args: { username: receiver }
             })
-            if(isUserExists.rows.length ===0){
+            if (isUserExists.rows.length === 0) {
                 return null;
             }
             const result = await db.execute({
@@ -76,13 +75,13 @@ export class MessagesModel {
                     created_at: fecha
                 }
             })
-            if(result === undefined || result === null){
+            if (result === undefined || result === null || result.rowsAffected > 0) {
                 return null;
             }
             channel.sendToQueue(queue, Buffer.from(JSON.stringify(mensaje)), {
                 persistent: true,
             });
-            return result ? 'ok' : null
+            return 'ok';
         } catch (e) {
             console.error(e)
         }
@@ -93,7 +92,7 @@ export class MessagesModel {
                 sql: 'select users.username, users.name from agenda, users where agenda.username = :username and agenda.person = users.username',
                 args: { username }
             })
-            return result ? result.rows : null
+            return result.rows.length > 0 ? result.rows : null
         } catch (e) {
             console.error(e)
             return null
@@ -108,16 +107,16 @@ export class MessagesModel {
             })
             const isUserExists = await db.execute({
                 sql: 'select * from users where username = :receiver',
-                args: {receiver } 
+                args: { receiver }
             })
-            if (isblocked.rows.length > 0 || isUserExists.rows.length ===0) {
+            if (isblocked.rows.length > 0 || isUserExists.rows.length === 0) {
                 return null;
             }
             const result = await db.execute({
                 sql: 'insert into agenda (username, person) values( :username, :person), (:person, :username)',
                 args: { username, person }
             })
-            return result ? 'ok' : null;
+            return result.rowsAffected > 0 ? 'ok' : null;
         } catch (e) {
             console.error(e);
             return null;
@@ -126,6 +125,13 @@ export class MessagesModel {
     static async login({ input }) {
         const { username, password } = input
         try {
+            const result = await db.execute({
+                sql: 'select login_failed from users where username = :username',
+                args: {username: username}
+            })
+            if(result.rows[0].login_failed >=5){
+                return 0;
+            }
             const usuario = await db.execute({
                 sql: 'select username, password, name from users where username = :username',
                 args: { username: username }
@@ -133,6 +139,10 @@ export class MessagesModel {
             const userpassword = usuario.rows[0].password
             const valid = await bcrypt.compare(password, userpassword)
             if (!valid) {
+                const result = await db.execute({
+                    sql: 'update users set login_failed = login_failed + 1 where username = :username',
+                    args: {username: username}
+                })
                 return null;
             }
             const createdtoken = token({ input: { username: usuario.rows[0].username, id: usuario.rows[0].id } });
@@ -153,8 +163,10 @@ export class MessagesModel {
                 sql: 'delete from agenda where (username = :username and person = :blocked) or (username = :blocked and person = :username)',
                 args: { username, blocked }
             })
-
-            return result && deleteFromAgenda ? 'ok' : null;
+            if (result.rowsAffected === 0 || !result || deleteFromAgenda.rowsAffected === 0 || !deleteFromAgenda) {
+                return null;
+            }
+            return 'ok';
         } catch (e) {
             console.error(e);
             return null;
@@ -179,23 +191,23 @@ export class MessagesModel {
                     name
                 }
             })
+            if (result === undefined || result === null || result.rowsAffected === 0) {
+                return null;
+            }
             const user = await db.execute({
                 sql: 'select id, username, password from users where username = :username',
                 args: { username: username }
             })
             const createdtoken = token({ input: { username: user.rows[0].username, id: user.rows[0].id } });
-            if (result === undefined || result === null) {
-                return null;
-            }
             result.token = createdtoken;
             return result;
         } catch (e) {
             console.error(e)
         }
     }
-    static async unlockUser({ input}){
-        const {blocked, username} = input;
-        try{
+    static async unlockUser({ input }) {
+        const { blocked, username } = input;
+        try {
             const result = await db.execute({
                 sql: 'delete from blocked where blocked_user = :blocked and username = :username',
                 args: { blocked, username }
@@ -206,8 +218,8 @@ export class MessagesModel {
             return null;
         }
     }
-    static async getBlockedUsers({username}){
-        try{
+    static async getBlockedUsers({ username }) {
+        try {
             const result = await db.execute({
                 sql: 'select users.username, users.name from blocked, users where blocked.username = :username and blocked.blocked_user = users.username',
                 args: { username }
@@ -215,6 +227,76 @@ export class MessagesModel {
             return result.rows;
         } catch (e) {
             console.error(e)
+            return null;
+        }
+    }
+    static async editMessage({ input }) {
+        const { username } = input;
+        const { old } = input;
+        try {
+            const result = await db.execute({
+                sql: 'select id from messages where sender = :username and message = :old',
+                args: { username, old: old.message }
+            })
+            if (result === null || result === undefined || result.rows.length === 0) {
+                return null;
+            }
+            const update = await db.execute({
+                sql: 'update messages set message = :message where id = :id',
+                args: { message, id: result.rows[0].id }
+            })
+            if(!update || update.rowsAffected ===0){
+                return null;
+            }
+            return 'ok';
+        } catch (e) {
+            console.error(e)
+            return null;
+        }
+    }
+    static async deleteMessage ({input}){
+        try{
+            const {username} = input;
+            const {data} = input;
+
+            const result = await db.execute({
+                sql: 'select id from messages where sender = :username and message= :message',
+                args: {username, message: data.message}
+            })
+            if(!result || result.rowsAffected===0){
+                return null;
+            }
+            const remove = await db.execute({
+                sql: 'delete from messages where id = :id',
+                args: {id: result.rows[0].id}
+            })
+            if(!remove || remove.rowsAffected===0){
+                return null;
+            }
+            return 'ok'
+        }catch(e){
+            console.error(e);
+            return null;
+        }
+    }
+    static async resetPassword({ username }) {
+        try {
+            const result = await db.execute({
+                sql: 'select id from users where username = :username',
+                args: {username}
+            })
+            if(result.rows.length ===0){
+                return null;
+            }
+            const token = jwt.sign({
+                user_id: result.rows[0].id,
+                type: "password_reset"
+            }, process.env.SECRET_KEY ,{
+                expiresIn: '15m'
+            }
+            )
+        } catch (e) {
+            console.error(e);
             return null;
         }
     }

@@ -40,9 +40,12 @@ export function useLogin() {
                 form.reset()
                 window.location.href = '/Home'
                 return
-            } else if (respuesta.status === 404) {
+            } else if (respuesta === null) {
                 setError(true);
                 setErrorMessage('The username or password is incorrect.');
+            }else if(respuesta === 1){
+                setError(true);
+                setErrorMessage('The user is blocked. Login limit attempts reached.')
             }
             setCargando(false);
             setError(true);

@@ -57,7 +57,7 @@ export default function Home({ routeParams }) {
                         color="primary"
                         disabled={cargando}
                     >
-                        {cargando ? 'Enviando...' : 'Enviar'}
+                        {cargando ? 'Sending...' : 'Send'}
                     </Button>
                 </Box>
                 <Divider />
