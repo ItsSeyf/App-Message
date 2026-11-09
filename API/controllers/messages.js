@@ -151,7 +151,7 @@ export class MessagesController {
         const {username} = req.user;
         const result = await MessagesModel.getAccountDetails({input: {username}})
         if(result=== null){
-            return res.status(500).json({message: 'Error changing the password'})
+            return res.status(404).json({message: 'Error getting the details'})
         }
         return res.status(200).json({message: 'Password modified'})
     }

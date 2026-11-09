@@ -241,3 +241,53 @@ export const getResetLink = async (data)=>{
         return {status: 500}
     }
 }
+
+export const resetPassword= async (data)=>{
+    try{
+        const response = await fetch(`${url}/reset`,{
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data })
+        })
+        const result = await response.json();
+        return result.status === 500 || result.status=== 400 ? null : result;
+    }catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const getAccountDetails = async ()=>{
+    try{
+        const response = await fetch(`${url}/account`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+        const result = await response.json();
+        return result.status === 404 ? null : result;
+    } catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const changeAccountDetails = async (data)=>{
+    try{
+        const response = await fetch(`${url}/account`,{
+            method: 'PATCH',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data })
+        })
+        const result = await response.json();
+        return result.status === 500 ? null : result;
+    }catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}

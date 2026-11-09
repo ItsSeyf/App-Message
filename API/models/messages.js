@@ -137,8 +137,28 @@ export class MessagesModel {
                 sql: 'select login_failed from users where username = :username',
                 args: { username: username }
             })
-            if (result.rows[0].login_failed >= 5) {
+            if (result.rows[0].login_failed > 4) {
+                const date = new Date();
+                await db.execute({
+                    sql: 'update users set login_date = :date where username = :username',
+                    agrs: {date, username}
+                })
                 return 0;
+            }
+            if(result.rows[0].login_date !== undefined || result.rows[0].login_date !== null){
+                const now = new Date();
+                const before = new Date(result.rows[0].login_date);
+                if(hours(before, now)=== false){
+                    return 0;
+                }else{
+                    const result = await db.execute({
+                        sql: 'update users set login_failed = 0, login_date=null where username = :username',
+                        agrs: {username}
+                    })
+                    if(result.rowsAffected===0){
+                        return null;
+                    }
+                }
             }
             const usuario = await db.execute({
                 sql: 'select username, password, name from users where username = :username',
@@ -147,7 +167,7 @@ export class MessagesModel {
             const userpassword = usuario.rows[0].password
             const valid = await bcrypt.compare(password, userpassword)
             if (!valid) {
-                const result = await db.execute({
+                await db.execute({
                     sql: 'update users set login_failed = login_failed + 1 where username = :username',
                     args: { username: username }
                 })
@@ -299,10 +319,19 @@ export class MessagesModel {
                 if (hours(before, now) === false) {
                     return null
                 } else {
-                    
+                    const result = await db.execute({
+                        sql: 'update users set resets = 0, resets_date = null where username = :username',
+                        args: {username}
+                    })
+                    if(result.rowsAffected===0){
+                        return null;
+                    }
                 }
             }
-            if (result.rows.length === 0 || !result.rows[0].email || result.rows[0].resets > 2) {
+            if (result.rows.length === 0 || !result.rows[0].email) {
+                return null;
+            }
+            if(result.rows[0].resets >2){
                 const date = new Date();
                 await db.execute({
                     sql: 'update users set resets_date = :date where username =:username',
@@ -349,12 +378,19 @@ export class MessagesModel {
         try {
             const data = jwt.verify(token, process.env.SECRET_RESET)
             const { id } = data;
+            const clear = await db.execute({
+                sql: 'update users set login_failed=0 where id=:id',
+                args: {id}
+            })
+            if(clear.rowsAffected===0){
+                return null;
+            }
             const hashedpassword = await bcrypt.hash(password, 10)
             const result = await db.execute({
                 sql: 'update users set password= :hashedpassword where id = :id',
                 args: { hashedpassword, id }
             })
-            if (!result || result.rows.length === 0) {
+            if (!result || result.rowsAffected === 0) {
                 return null;
             }
             return 1;
