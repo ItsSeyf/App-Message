@@ -42,14 +42,18 @@ export const loginUser = async (datos) => {
     }
 }
 
-export const getMessages = async () => {
+export const getMessages = async (data) => {
     try {
         const response = await fetch(`${url}`,{
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
         })
         const result = await response.json();
-        return result;
+        return result.status === 400 ? null : result;
     } catch (e) {
         return { status: 500, message: e }
     }
@@ -124,7 +128,7 @@ export const addAgenda =async (receiver)=>{
             body: JSON.stringify({ receiver })
         })
         const result = await response.json();
-        return result.status === 404 ? null : result;
+        return result.status === 404 || result.status ===400 ? null : result;
     }
     catch(e){
         console.error(e);
@@ -143,7 +147,7 @@ export const blockUser = async (blocked)=>{
             body: JSON.stringify({ blocked })
         })
         const result = await response.json();
-        return result.status === 404 ? null : result;
+        return result.status === 500 || result.status=== 400 ? null : result;
     }
     catch(e){
         console.error(e);
@@ -162,7 +166,7 @@ export const unblockUser = async (blocked)=>{
             body: JSON.stringify({ blocked })
         })
         const result = await response.json();
-        return result.status === 404 ? null : result;
+        return result.status === 500 || result.status=== 400 ? null : result;
     }
     catch(e){
         console.error(e);
@@ -188,11 +192,51 @@ export const editMessage = async (data)=>{
     try{
         const response = await fetch(`${url}/`,{
             method: 'PATCH',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data })
         })
         const result = await response.json();
         return result.status === 500 ? null: result;
     }catch (e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const deleteMessage = async (data)=>{
+    try{
+        const response = await fetch(`${url}/`,{
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data })
+        })
+        const result = await response.json();
+        return result.status === 500 ? null : result;
+    }catch(e){
+        console.error(e);
+        return {status: 500}
+    }
+}
+
+export const getResetLink = async (data)=>{
+    try{
+        const response = await fetch(`${url}/reset`,{
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data })
+        })
+        const result = await response.json();
+        return result.status === 500 || result.status=== 400 ? null : result;
+    }catch(e){
         console.error(e);
         return {status: 500}
     }

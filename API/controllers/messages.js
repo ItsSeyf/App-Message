@@ -4,6 +4,9 @@ export class MessagesController {
     static async getALL(req, res) {
         const { username } = req.user;
         const { receiver } = req.body;
+        if(!receiver){
+            return res.status(400).json({messsage: 'The information is incomplete'})
+        }
         const messages = await MessagesModel.getALL({ input: { username, receiver } })
         res.status(200).json(messages)
     }
@@ -49,6 +52,9 @@ export class MessagesController {
     static async createAgenda(req, res) {
         const { username } = req.user;
         const { receiver } = req.body;
+        if(!receiver){
+            return res.status(400).json({messsage: 'The information is incomplete'})
+        }
         const result = await MessagesModel.createAgenda({ input: { username, receiver } })
         if (result === null) {
             return res.status(404).json({ error: 'User not added to agenda' })
@@ -68,15 +74,21 @@ export class MessagesController {
     static async block(req, res) {
         const { username } = req.user;
         const { blocked } = req.body;
+        if(!blocked){
+            return res.status(400).json({messsage: 'The information is incomplete'})
+        }
         const result = await MessagesModel.block({ input: { username, blocked } });
         if (result === null) {
-            return res.status(404).json({ error: 'User not blocked' })
+            return res.status(500).json({ error: 'User not blocked' })
         }
         return res.status(200).json({ message: 'User blocked successfully' })
     }
     static async unblock(req, res) {
         const { username } = req.user;
         const { blocked } = req.body;
+        if(!blocked){
+            return res.status(400).json({messsage: 'The information is incomplete'})
+        }
         const result = await MessagesModel.unblock({ input: { username, blocked } });
         if (result === null) {
             return res.status(500).json({ error: 'User not unblocked' })
@@ -107,6 +119,9 @@ export class MessagesController {
 
     static async getResetLink(req, res) {
         const {username} = req.body
+        if(!username){
+            return res.status(400).json({messsage: 'The information is incomplete'})
+        }
         const result = await MessagesModel.getResetlink({username});
         if(result=== null){
             return res.status(500).json({message: 'Error sending email'})
@@ -115,10 +130,29 @@ export class MessagesController {
     }
     static async resetPassword(req, res){
         const {token, password} = req.body
+        if(!password){
+            return res.status(400).json({messsage: 'The information is incomplete'})
+        }
         const result = await MessagesModel.resetpassword({input: {token, password}})
         if(result=== null){
             return res.status(500).json({message: 'Error reseting the password'})
         }
         return res.status(200).json({message: 'Password was reset'})
+    }
+    static async changeAccountDetails(req, res){
+        const {username} = req.user;
+        const result = await MessagesModel.changePassword({input: {username, data: req.body}})
+        if(result=== null){
+            return res.status(500).json({message: 'Error changing the account details'})
+        }
+        return res.status(200).json({message: 'Account details updated'})
+    }
+    static async getAccountDetails(req, res){
+        const {username} = req.user;
+        const result = await MessagesModel.getAccountDetails({input: {username}})
+        if(result=== null){
+            return res.status(500).json({message: 'Error changing the password'})
+        }
+        return res.status(200).json({message: 'Password modified'})
     }
 }

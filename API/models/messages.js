@@ -19,20 +19,26 @@ const token = (input) => {
         { expiresIn: '24h' });
 }
 
-await db.execute('Create table if not exists users ( id integer primary key autoincrement,username Varchar(100), name varchar(50), password text, email text, login_failed integer default 0, resets integer default 0)')
+const hours = (fecha1, fecha2) => {
+    const milliseconds = 86400000
 
-await db.execute('Create if not exists unique index I_username on users(username)')
+    const diff = new Date(fecha2) - new Date(fecha1);
 
-await db.execute('Create table if not exists password_reset (token_hash text primary key, username varchar(100), expires_at text, constraint fk_reset_password foreign key(username) references users(username))')
+    return diff >= milliseconds;
+}
+
+await db.execute('Create table if not exists users ( id integer primary key autoincrement,username Varchar(100), name varchar(50), password text, email text, login_failed integer default 0, login_date text, resets integer default 0, resets_date text)')
+
+await db.execute('Create unique index if not exists I_username on users(username)')
 
 await db.execute(
     'Create table if not exists messages ( id integer primary key autoincrement,sender Varchar(100), receiver varchar(100), messages text, created_at text)')
 
 await db.execute(
-    'Create table if not exists blocked ( id integer primary key autoincrement, username varchar(100), blocked_user varchar(100), constraint fk_blocked foreign key (username, blocked_user) references users(username) )')
+    'Create table if not exists blocked ( id integer primary key autoincrement, username varchar(100), blocked_user varchar(100), constraint fk_blocked foreign key (username) references users(username), constraint fk_blockedU foreign key (blocked_user) references users(username))')
 
 await db.execute(
-    'Create table if not exists agenda ( id integer primary key autoincrement, username varchar(100), person varchar(100), constraint fk_agenda foreign key(username, person) references users(username))')
+    'Create table if not exists agenda ( id integer primary key autoincrement, username varchar(100), person varchar(100), constraint fk_agenda foreign key(username) references users(username), constraint fk_agendaP foreign key(person) references users(username))')
 
 export class MessagesModel {
     static async getALL({ input }) {
@@ -265,7 +271,7 @@ export class MessagesModel {
                 sql: 'select id from messages where sender = :username and message= :message',
                 args: { username, message: data.message }
             })
-            if (!result || result.rowsAffected === 0) {
+            if (result.rows.length === 0) {
                 return null;
             }
             const remove = await db.execute({
@@ -284,12 +290,31 @@ export class MessagesModel {
     static async getResetlink({ username }) {
         try {
             const result = await db.execute({
-                sql: 'select id, email from users where username = :username',
+                sql: 'select id, email, resets, resets_date from users where username = :username',
                 args: { username }
             })
-            if (result.rows.length === 0) {
+            if (result.rows[0].resets_date) {
+                const before = new Date(result.rows[0].resets_date)
+                const now = new Date();
+                if (hours(before, now) === false) {
+                    return null
+                } else {
+                    
+                }
+            }
+            if (result.rows.length === 0 || !result.rows[0].email || result.rows[0].resets > 2) {
+                const date = new Date();
+                await db.execute({
+                    sql: 'update users set resets_date = :date where username =:username',
+                    args: { username: result.rows[0].username, date }
+                })
                 return null;
             }
+            const update = await db.execute({
+                sql: 'update users set resets = resets +1 where username = :username',
+                args: { username: result.rows[0].username }
+            })
+            if (update.rowsAffected === 0) return null;
             const token = jwt.sign({
                 user_id: result.rows[0].id,
                 type: "password_reset"
@@ -298,13 +323,17 @@ export class MessagesModel {
             }
             )
             const resend = new Resend(process.env.URL_RESEND)
-            const {data, error} = resend.emails.send({
+            const { data, error } = resend.emails.send({
                 from: 'onboarding@resend.dev',
                 to: result.rows[0].email,
                 subject: 'Password Reset',
                 html: `<a href=${token}><strong>Click on this to reset your password!</strong>!</a> </br> <p><strong> This link is available for only 15 minutes</strong></p> `
             })
-            if(error){
+            if (error) {
+                await db.execute({
+                    sql: 'update users set resets = resets -1 where username = :username',
+                    args: { username: result.rows[0].username }
+                })
                 console.error(error);
                 return null;
             }
@@ -315,21 +344,67 @@ export class MessagesModel {
             return null;
         }
     }
-    static async resetpassword({input}){
-        const {token, password} = input;
-        try{
-            const data= jwt.verify(token, process.env.SECRET_RESET)
-            const {id} = data;
+    static async resetpassword({ input }) {
+        const { token, password } = input;
+        try {
+            const data = jwt.verify(token, process.env.SECRET_RESET)
+            const { id } = data;
             const hashedpassword = await bcrypt.hash(password, 10)
             const result = await db.execute({
                 sql: 'update users set password= :hashedpassword where id = :id',
-                args: {hashedpassword, id}
+                args: { hashedpassword, id }
             })
-            if(!result || result.rows.length===0){
+            if (!result || result.rows.length === 0) {
                 return null;
             }
             return 1;
-        }catch(e){
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+    static async changeAccountDetails({ input }) {
+        try {
+            const { username } = input;
+            const { newPassowrd, email, name } = input.data;
+            if (newPassowrd !== undefined && newPassowrd !== null) {
+                const hashedpassword = await bcrypt.hash(newPassowrd, 10);
+                const result = await db.execute({
+                    sql: 'update users set password = :password, name = :name, email =:email where username = :username',
+                    args: { password: hashedpassword, name, email, username }
+                })
+                if (result.rowsAffected === 0) {
+                    return null;
+                }
+            }
+            if (!email && !name) {
+                return null;
+            }
+            const result = await db.execute({
+                sql: 'update users set name = :name, email =:email where username = :username',
+                agrs: { name, email, username }
+            })
+            if (result.rowsAffected === 0) {
+                return null;
+            }
+            return 1;
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+    static async getAccountDetails({ input }) {
+        try {
+            const { username } = input;
+            const result = await db.execute({
+                sql: 'select username, name, email from users where username =: username',
+                args: { username }
+            })
+            if (result.rows.length === 0) {
+                return null;
+            }
+            return result.rows[0];
+        } catch (e) {
             console.error(e);
             return null;
         }

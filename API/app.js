@@ -8,10 +8,10 @@ import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
+dotenv.config();
+
 const app= express();
 const server=createServer(app);
-
-dotenv.config();
 
 const io= new Server(server, {
     cors :{

@@ -34,3 +34,7 @@ messagesRouter.get('/blocked', MessagesController.getBlocked);
 messagesRouter.patch('/', MessagesController.editMessage)
 
 messagesRouter.delete('/', MessagesController.delteMessage)
+
+messagesRouter.patch('/account', MessagesController.changeAccountDetails)
+
+messagesRouter.get('/account', MessagesController.getAccountDetails)
