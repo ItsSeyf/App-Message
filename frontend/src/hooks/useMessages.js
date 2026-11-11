@@ -1,5 +1,5 @@
 import { socket } from '../services/messages.js'
-import { getMessages, sendMessage, Logout } from '../services/messages.js'
+import { getMessages, sendMessage, Logout, editMessage, deleteMessage } from '../services/messages.js'
 import { useState, useEffect, useReducer } from 'react';
 import { messagesReducer, messagesInitialState } from '../reducers/messages.js';
 
@@ -8,7 +8,6 @@ export function useMessages() {
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState(false);
     const [mensajeError, setMensajeError] = useState('');
-    const [mensajes, setMensajes] = useState([]);
     useEffect(() => {
         (async () => {
             setCargando(true);
@@ -67,7 +66,7 @@ export function useMessages() {
         const mensaje = data.get('mensaje')
         const receptor = data.get('receptor')
         const fecha = new Date().toISOString()
-        const respuesta = await sendMessage({ receiver: receptor, messages: mensaje, fecha: fecha });
+        const respuesta = await sendMessage({ receiver: receptor, messages: mensaje, created_at: fecha });
         if (respuesta === 500) {
             setCargando(false);
             setError(true);
@@ -87,10 +86,40 @@ export function useMessages() {
         setCargando(false);
         dispatch({
             type: 'ADD',
-            payload: {id: respuesta, receptor}
+            payload: respuesta
         })
         form.reset()
         return
+    }
+    const editmessage = async (data)=>{
+        setCargando(true);
+        const result = await editMessage(data)
+        if(result){
+            dispatch({
+                type: 'EDIT',
+                payload: data
+            })
+            return;
+        }
+        setCargando(false);
+        setError(true);
+        setMensajeError('Error editing your message. Try again later');
+        return;
+    }
+    const deletemessage = async (id)=>{
+        setCargando(true)
+        const result = await deleteMessage(id)
+        if(result){
+            dispatch({
+                type: 'DELETE',
+                payload: {id}
+            })
+            return;
+        }
+        setCargando(false);
+        setError(true);
+        setMensajeError('Error deleting your message. Try again later');
+        return;
     }
     const cerrarSesion = async () => {
         await Logout();
@@ -101,5 +130,5 @@ export function useMessages() {
         setMensajeError('');
     }
 
-    return { cargando, error, mensajeError, mensajes, handleSubmit, cerrarSesion, closeAlert }
+    return { cargando, error, mensajeError, state,editmessage, deletemessage, handleSubmit, cerrarSesion, closeAlert }
 }

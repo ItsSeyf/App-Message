@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAgenda, addAgenda } from '../services/messages.js'
+import { getAgenda, addAgenda, blockUser } from '../services/messages.js'
 
 export function useAgenda() {
     const [agenda, setAgenda] = useState([]);
@@ -31,7 +31,8 @@ export function useAgenda() {
     const handleSubmit = async (event) => {
         setCargando(true);
         event.preventDefault();
-        const data = new FormData(event.target);
+        const form = event.currentTarget;
+        const data = new FormData(form);
         const receiver = data.get('receiver');
         const result = await addAgenda(receiver);
         if (result.status === 404) {
@@ -42,7 +43,7 @@ export function useAgenda() {
             setError(true);
             setMensajeError('Server error while adding to agenda. Try again later.');
             setCargando(false);
-        }else if (respuesta.status === 401) {
+        }else if (result.status === 401) {
             setCargando(false);
             form.reset();
             window.location.href = '/Login'
@@ -55,15 +56,10 @@ export function useAgenda() {
     }
     const removeFromAgenda = async (receiver) => {
         setCargando(true);
-        const result = await fetch(`${url}/block`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ receiver })
-        })
-        setAgenda(agenda.filter(user => user.username !== receiver))
+        const result = blockUser(receiver);
+        if(result){
+            setAgenda(agenda.filter(user => user.username !== receiver))
+        }
         setCargando(false);
     }
     return { agenda, error, cargando, mensajeError, handleSubmit, removeFromAgenda, closeAlert };

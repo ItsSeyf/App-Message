@@ -45,7 +45,7 @@ export class MessagesModel {
         try {
             if (input.username && input.receiver) {
                 const result = await db.execute({
-                    sql: 'select id, sender, name, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
+                    sql: 'select id, name, sender, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
                     args: { username: input.username, receiver: input.receiver }
                 })
                 return result.rows.length > 0 ? result.rows : null
@@ -57,8 +57,7 @@ export class MessagesModel {
         }
     }
     static async create({ input }) {
-        const { sender, receiver, messages, fecha } = input.data
-        const mensaje = { sender, receiver, messages, fecha }
+        const { sender, receiver, messages, created_at } = input.data
         try {
             const isblocked = await db.execute({
                 sql: 'select * from blocked where (username = :sender and blocked_user = :receiver) or (username = :receiver and blocked_user = :sender)',
@@ -80,17 +79,20 @@ export class MessagesModel {
                     sender,
                     receiver,
                     msg: messages,
-                    created_at: fecha
+                    created_at
                 }
             })
             if (result === undefined || result === null || result.rowsAffected === 0) {
                 return null;
             }
-            mensaje.id = result.lastInsertRowid;
-            channel.sendToQueue(queue, Buffer.from(JSON.stringify(mensaje)), {
+            const message = await db.execute({
+                    sql: 'select id, name, sender, receiver, messages, created_at from messages where messages.id = :id inner join users on messages.sender = users.username order by created_at desc',
+                    args: { id: result.lastInsertRowid }
+                })
+            channel.sendToQueue(queue, Buffer.from(JSON.stringify(message.rows[0])), {
                 persistent: true,
             });
-            return result.lastInsertRowid;
+            return message.rows[0];
         } catch (e) {
             console.error(e)
         }
@@ -263,15 +265,15 @@ export class MessagesModel {
         const { id, message, username} = input;
         try {
             const result = await db.execute({
-                sql: 'select id from messages where id =:id and sender =:sender',
+                sql: 'select id from messages where id = :id and sender = :username',
                 args: { username, id }
             })
             if (result === null || result === undefined || result.rows.length === 0) {
                 return null;
             }
             const update = await db.execute({
-                sql: 'update messages set message = :message where id = :id',
-                args: { message, id }
+                sql: 'update messages set messages = :message where id = :id and sender = :username',
+                args: { message, id, username }
             })
             if (!update || update.rowsAffected === 0) {
                 return null;

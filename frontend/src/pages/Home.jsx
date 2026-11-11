@@ -14,10 +14,14 @@ import {
     TextField,
     Typography
 } from '@mui/material';
+import { useState } from 'react';
 import { useMessages } from '../hooks/useMessages.js';
 
 export default function Home({ routeParams }) {
-    const {cargando, error, mensajeError, mensajes, handleSubmit, cerrarSesion, closeAlert} = useMessages();
+    const {cargando, error, mensajeError, state, handleSubmit, cerrarSesion, closeAlert, editmessage, deletemessage} = useMessages();
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editedMessage, setEditedMessage] = useState('');
+
     return (
         <Container sx={{ display: 'flex', flexDirection: 'row', gap: 2, height: '92vh', padding: 2 }}>
 
@@ -82,34 +86,97 @@ export default function Home({ routeParams }) {
                 <Typography component="h1" variant="h5">
                     Messages
                 </Typography>
-                {mensajes.length > 0 ? (
-                    mensajes.map((mensaje, index) => (
-                        <Box
-                            key={index}
-                            sx={{
-                                marginBottom: 2,
-                                padding: 2,
-                                border: '1px solid #ddd',
-                                borderRadius: 2,
-                                backgroundColor: mensaje.sender === usuario ? '#E3F2FD' : '#FFCDD2',
-                                color: '#333333'
-                            }}
-                        >
-                            <Typography variant="body1">
-                                <strong>From:</strong> {mensaje.sender === usuario ? 'Tú' : mensaje.sender} <br />
-                            </Typography>
-                            <Typography variant="body1">
-                                <strong>To:</strong> {mensaje.receiver === usuario ? 'Tú' : mensaje.receiver} <br />
-                                <strong>Message:</strong>
-                            </Typography>
-                            <Typography variant="body2" sx={{ marginTop: 1 }}>
-                                {mensaje.messages}
-                            </Typography>
-                            <Typography variant="caption" sx={{ display: 'block', marginTop: 1, color: '#333333' }}>
-                                {mensaje.created_at ? new Date(mensaje.created_at).toLocaleString() : 'Fecha no disponible'}
-                            </Typography>
-                        </Box>
-                    ))
+                {state.length > 0 ? (
+                    state.map((mensaje, index) => {
+                        const isEditing = editingMessageId === mensaje.id;
+                        const messageText = mensaje.message ?? mensaje.messages;
+
+                        return (
+                            <Box
+                                key={index}
+                                sx={{
+                                    marginBottom: 2,
+                                    padding: 2,
+                                    border: '1px solid #ddd',
+                                    borderRadius: 2,
+                                    backgroundColor: mensaje.receiver === routeParams.receiver ? '#E3F2FD' : '#FFCDD2',
+                                    color: '#333333'
+                                }}
+                            >
+                                <Typography variant="body1">
+                                    <strong>From:</strong> {mensaje.receiver === routeParams.receiver ? mensaje.receiver : 'You'} <br />
+                                </Typography>
+                                <Typography variant="body1">
+                                    <strong>To:</strong> {mensaje.receiver === routeParams.receiver ? mensaje.receiver : 'You'} <br />
+                                    <strong>Message:</strong>
+                                </Typography>
+                                {isEditing ? (
+                                    <TextField
+                                        value={editedMessage}
+                                        onChange={(event) => setEditedMessage(event.target.value)}
+                                        multiline
+                                        fullWidth
+                                        autoFocus
+                                        disabled={cargando}
+                                        sx={{ mt: 1 }}
+                                        inputProps={{ 'aria-label': 'Edit message' }}
+                                    />
+                                ) : (
+                                    <Typography variant="body2" sx={{ marginTop: 1, whiteSpace: 'pre-wrap' }}>
+                                        {messageText}
+                                    </Typography>
+                                )}
+                                <Typography variant="caption" sx={{ display: 'block', marginTop: 1, color: '#333333' }}>
+                                    {mensaje.created_at ? new Date(mensaje.created_at).toLocaleString() : 'Fecha no disponible'}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+                                    {isEditing ? (
+                                        <>
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingMessageId(null);
+                                                    setEditedMessage('');
+                                                }}
+                                                disabled={cargando}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={async () => {
+                                                    await editmessage({ id: mensaje.id, messages: editedMessage });
+                                                    setEditingMessageId(null);
+                                                    setEditedMessage('');
+                                                }}
+                                                variant="contained"
+                                                disabled={cargando || !editedMessage.trim()}
+                                            >
+                                                Accept
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                onClick={() => {
+                                                    setEditingMessageId(mensaje.id);
+                                                    setEditedMessage(messageText);
+                                                }}
+                                                disabled={cargando}
+                                            >
+                                                Edit
+                                            </Button>
+                                            <Button
+                                                onClick={() => deletemessage(mensaje.id)}
+                                                disabled={cargando}
+                                                color="error"
+                                            >
+                                                Delete
+                                            </Button>
+                                        </>
+                                    )}
+                                </Box>
+                            </Box>
+                        );
+                    })
                 ) : (
                     <Typography variant="body2" color="textSecondary">
                         You don't have any messages yet.

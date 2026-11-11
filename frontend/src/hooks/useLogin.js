@@ -23,7 +23,7 @@ export function useLogin() {
     }
     const handleSubmit = async (event) => {
         setCargando(true);
-        if (errorUsuario || errorContra) {
+        if (error) {
             event.preventDefault();
             setCargando(false);
             return;
@@ -58,7 +58,7 @@ export function useLogin() {
     }
     const closeAlert = () => {
         setError(false);
-        setMensajeError('');
+        setErrorMessage('');
     }
 
     return {
