@@ -45,7 +45,7 @@ export class MessagesModel {
         try {
             if (input.username && input.receiver) {
                 const result = await db.execute({
-                    sql: 'select sender, name, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
+                    sql: 'select id, sender, name, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
                     args: { username: input.username, receiver: input.receiver }
                 })
                 return result.rows.length > 0 ? result.rows : null
@@ -83,13 +83,14 @@ export class MessagesModel {
                     created_at: fecha
                 }
             })
-            if (result === undefined || result === null || result.rowsAffected > 0) {
+            if (result === undefined || result === null || result.rowsAffected === 0) {
                 return null;
             }
+            mensaje.id = result.lastInsertRowid;
             channel.sendToQueue(queue, Buffer.from(JSON.stringify(mensaje)), {
                 persistent: true,
             });
-            return 'ok';
+            return result.lastInsertRowid;
         } catch (e) {
             console.error(e)
         }
@@ -259,19 +260,18 @@ export class MessagesModel {
         }
     }
     static async editMessage({ input }) {
-        const { username } = input;
-        const { old } = input;
+        const { id, message, username} = input;
         try {
             const result = await db.execute({
-                sql: 'select id from messages where sender = :username and message = :old',
-                args: { username, old: old.message }
+                sql: 'select id from messages where id =:id and sender =:sender',
+                args: { username, id }
             })
             if (result === null || result === undefined || result.rows.length === 0) {
                 return null;
             }
             const update = await db.execute({
                 sql: 'update messages set message = :message where id = :id',
-                args: { message, id: result.rows[0].id }
+                args: { message, id }
             })
             if (!update || update.rowsAffected === 0) {
                 return null;
@@ -284,19 +284,18 @@ export class MessagesModel {
     }
     static async deleteMessage({ input }) {
         try {
-            const { username } = input;
-            const { data } = input;
+            const { username, id } = input;
 
             const result = await db.execute({
-                sql: 'select id from messages where sender = :username and message= :message',
-                args: { username, message: data.message }
+                sql: 'select id from messages where sender = :username and id=:id',
+                args: { username, id: id }
             })
             if (result.rows.length === 0) {
                 return null;
             }
             const remove = await db.execute({
                 sql: 'delete from messages where id = :id',
-                args: { id: result.rows[0].id }
+                args: { id: id }
             })
             if (!remove || remove.rowsAffected === 0) {
                 return null;

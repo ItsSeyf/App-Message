@@ -1,8 +1,10 @@
 import { socket } from '../services/messages.js'
 import { getMessages, sendMessage, Logout } from '../services/messages.js'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useReducer } from 'react';
+import { messagesReducer, messagesInitialState } from '../reducers/messages.js';
 
 export function useMessages() {
+    const [state, dispatch] = useReducer(messagesReducer, messagesInitialState);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState(false);
     const [mensajeError, setMensajeError] = useState('');
@@ -20,8 +22,14 @@ export function useMessages() {
                 window.location.href = '/Login'
                 return;
             }
-            setMensajes(respuesta)
-            setCargando(false);
+            if(!respuesta){
+                setCargando(false);
+                return;
+            }
+            dispatch({
+                type: 'LOAD',
+                payload: respuesta
+            })
             return;
         })()
         console.log('Coneccting Socket...')
@@ -35,7 +43,10 @@ export function useMessages() {
         });
         socket.on('message', (mensaje) => {
             console.log('New message', mensaje)
-            setMensajes((prevMensajes) => [...prevMensajes, mensaje]);
+            dispatch({
+                type: 'ADD',
+                payload: mensaje
+            })
         });
 
         return () => {
@@ -45,6 +56,9 @@ export function useMessages() {
             socket.disconnect();
         }
     }, [])
+    useEffect(()=>{
+        setCargando(false)
+    }, [state])
     const handleSubmit = async (event) => {
         setCargando(true);
         event.preventDefault();
@@ -71,12 +85,10 @@ export function useMessages() {
             return
         }
         setCargando(false);
-        setMensajes((prevMensajes) => [...prevMensajes, {
-            sender: usuario,
-            receiver: receptor,
-            messages: mensaje,
-            created_at: fecha
-        }])
+        dispatch({
+            type: 'ADD',
+            payload: {id: respuesta, receptor}
+        })
         form.reset()
         return
     }
