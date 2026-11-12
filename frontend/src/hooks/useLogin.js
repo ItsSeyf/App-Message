@@ -34,19 +34,24 @@ export function useLogin() {
         const usuario = data.get('user')
         const contra = data.get('pass')
         try {
+            console.log('antes de consulta')
             const respuesta = await loginUser({ username: usuario, password: contra });
             if (respuesta.status === 200) {
+                console.log('hola')
                 setCargando(false);
                 form.reset()
-                window.location.href = '/Home'
+                window.location.href = '/'
                 return
             } else if (respuesta === null) {
+                console.log('hola 2')
                 setError(true);
                 setErrorMessage('The username or password is incorrect.');
             }else if(respuesta === 1){
+                console.log('hola 3')
                 setError(true);
                 setErrorMessage('The user is blocked. Login limit attempts reached.')
             }
+                console.log('hola3')
             setCargando(false);
             setError(true);
             setErrorMessage('Server error. Try again later.');

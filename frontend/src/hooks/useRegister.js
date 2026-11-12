@@ -29,7 +29,7 @@ export function useRegister() {
     }
     const handleSubmit = async (event) => {
         setCargando(true);
-        if (errorUsuario || errorContra) {
+        if (error) {
             event.preventDefault();
             setCargando(false);
             return;
@@ -40,14 +40,15 @@ export function useRegister() {
         const usuario = data.get('user')
         const contra = data.get('pass')
         const name = data.get('name')
+        const email = data.get('email')
         try {
-            const respuesta = await registerUser({ username: usuario, password: contra, name })
-            if (respuesta.statusCode === 201) {
+            const respuesta = await registerUser({ username: usuario, password: contra, name, email })
+            if (respuesta.status === 201) {
                 setCargando(false);
                 form.reset()
                 window.location.href = '/Home'
                 return;
-            } else if (respuesta.statusCode === 404) {
+            } else if (respuesta.status === 404) {
                 setCargando(false);
                 setError(true);
                 setErrorMessage('The user already exists');
@@ -64,7 +65,7 @@ export function useRegister() {
     }
     const closeAlert = ()=>{
         setError(false);
-        setMensajeError('');
+        setErrorMessage('');
     }
     return {error,closeAlert, errormessage, cargando, validar, handleSubmit}
 }

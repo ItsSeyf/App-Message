@@ -9,7 +9,6 @@ const LazyHome= lazy(()=> import('./pages/Home.jsx'))
 const LazyAgenda = lazy(()=> import('./pages/Agenda.jsx'))
 const LazyRegister= lazy(()=> import('./pages/Register.jsx'))
 const LazyBlocked = lazy(()=> import('./pages/Blocked.jsx'))
-const user= JSON.parse(sessionStorage.getItem('user') || null)
 
 const appRoutes=[
   {

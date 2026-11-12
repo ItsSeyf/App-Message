@@ -7,44 +7,46 @@ export class MessagesController {
         if(!receiver){
             return res.status(400).json({messsage: 'The information is incomplete'})
         }
-        const messages = await MessagesModel.getALL({ input: { username, receiver } })
+        const messages = await MessagesModel.getALL({ input : {username, receiver} })
         res.status(200).json(messages)
     }
     static async createMessage(req, res) {
         const { username } = req.user;
-        const message = await MessagesModel.create({ input: { username, data: req.body } })
+        const message = await MessagesModel.create({input: {username, data: req.body}})
         if (!message) {
             return res.status(404).json({ error: 'Message not created' })
         }
         res.status(201).json(message)
     }
     static async login(req, res) {
-        const result = await MessagesModel.login({ input: req.body })
+        const {username, password} = req.body;
+        const result = await MessagesModel.login({ input: {username, password} })
         if (result) {
-            res.cookie('access_token', result.token, {
+            return res.cookie('access_token', result, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
                 maxAge: 1000 * 60 * 24
             })
-                .status(200).json(result)
+                .status(200).json({message: 'Success'})
         } else if (result === 0) {
-            res.status(403).json({ message: 'Login blocked' })
+            return res.status(403).json({ message: 'Login blocked' })
         } else {
-            res.status(404).json({ error: 'User not found' })
+            return res.status(404).json({ error: 'User not found' })
         }
     }
     static async register(req, res) {
-        const user = await MessagesModel.register({ input: req.body })
+        const {username, name, password, email} = req.body
+        const user = await MessagesModel.register({input: { username, name, password, email }})
         if (!user) {
             return res.status(404).json({ error: 'User not created' })
         }
-        res.status(201).cookie('access_token', user.token, {
+        return res.status(201).cookie('access_token', user.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 1000 * 60 * 24
-        })
+        }).json({message: 'Success'})
     }
     static async logout(req, res) {
         res.clearCookie('access_token').json({ message: 'Logout successful' })
@@ -55,7 +57,7 @@ export class MessagesController {
         if(!receiver){
             return res.status(400).json({messsage: 'The information is incomplete'})
         }
-        const result = await MessagesModel.createAgenda({ input: { username, receiver } })
+        const result = await MessagesModel.createAgenda({ input: {username, receiver} })
         if (result === null) {
             return res.status(404).json({ error: 'User not added to agenda' })
         }
@@ -63,11 +65,9 @@ export class MessagesController {
     }
 
     static async getAgenda(req, res) {
+        console.log(req.user)
         const { username } = req.user;
-        const result = await MessagesModel.getAgenda({ input: { username } })
-        if (result === null) {
-            return res.status(404).json({ error: 'Agenda not founded' })
-        }
+        const result = await MessagesModel.getAgenda({ username })
         return res.status(200).json(result)
     }
 
@@ -77,7 +77,7 @@ export class MessagesController {
         if(!blocked){
             return res.status(400).json({messsage: 'The information is incomplete'})
         }
-        const result = await MessagesModel.block({ input: { username, blocked } });
+        const result = await MessagesModel.block({ input: {username, blocked} });
         if (result === null) {
             return res.status(500).json({ error: 'User not blocked' })
         }
@@ -89,7 +89,7 @@ export class MessagesController {
         if(!blocked){
             return res.status(400).json({messsage: 'The information is incomplete'})
         }
-        const result = await MessagesModel.unblock({ input: { username, blocked } });
+        const result = await MessagesModel.unlockUser({ input: {username, blocked} });
         if (result === null) {
             return res.status(500).json({ error: 'User not unblocked' })
         }
@@ -97,13 +97,13 @@ export class MessagesController {
     }
     static async getBlocked(req, res) {
         const { username } = req.user;
-        const result = await MessagesModel.getBlocked({ input: { username } });
+        const result = await MessagesModel.getBlocked({ username });
         return res.status(200).json(result)
     }
     static async editMessage(req, res) {
         const { username } = req.user;
         const {id, message} = req.body;
-        const result = await MessagesModel.editMessage({ input: {username, id, message} })
+        const result = await MessagesModel.editMessage({input: { username, id, message} })
         if (result === null) {
             return res.status(500).json({ message: 'Message not edited' })
         }
@@ -112,7 +112,7 @@ export class MessagesController {
     static async delteMessage(req, res) {
         const { username } = req.user;
         const {id} = req.body;
-        const result = await MessagesModel.deleteMessage({ input: {username, id} })
+        const result = await MessagesModel.deleteMessage({input: { username, id}})
         if (result === null) {
             return res.status(500).json({ message: 'Message not deleted' })
         }
@@ -151,7 +151,7 @@ export class MessagesController {
     }
     static async getAccountDetails(req, res){
         const {username} = req.user;
-        const result = await MessagesModel.getAccountDetails({input: {username}})
+        const result = await MessagesModel.getAccountDetails({username})
         if(result=== null){
             return res.status(404).json({message: 'Error getting the details'})
         }

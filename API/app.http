@@ -1,18 +1,13 @@
-POST http://localhost:1234/messages/register
-Content-Type: application/json
+GET http://localhost:1234/messages/agenda
 
-{
-    "username": "Michael",
-    "password": "123456"
-}
 ###Login
 
 POST http://localhost:1234/messages/login
 Content-Type: application/json
 
 {
-    "username": "Michael",
-    "password": "123456"
+    "username": "Pepito",
+    "password": "pepito"
 }
 
 ###Get messages

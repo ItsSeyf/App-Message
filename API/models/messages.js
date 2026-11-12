@@ -57,11 +57,12 @@ export class MessagesModel {
         }
     }
     static async create({ input }) {
-        const { sender, receiver, messages, created_at } = input.data
+        const {username} = input;
+        const {receiver, messages, created_at } = input.data
         try {
             const isblocked = await db.execute({
                 sql: 'select * from blocked where (username = :sender and blocked_user = :receiver) or (username = :receiver and blocked_user = :sender)',
-                args: { sender, receiver }
+                args: { sender: username, receiver }
             })
             if (isblocked.rows.length > 0) {
                 return null;
@@ -76,7 +77,7 @@ export class MessagesModel {
             const result = await db.execute({
                 sql: 'insert into messages(sender, receiver, messages, created_at) values(:sender, :receiver, :msg, :created_at)',
                 args: {
-                    sender,
+                    sender: username,
                     receiver,
                     msg: messages,
                     created_at
@@ -138,7 +139,7 @@ export class MessagesModel {
         try {
             const result = await db.execute({
                 sql: 'select login_failed from users where username = :username',
-                args: { username: username }
+                args: { username }
             })
             if (result.rows[0].login_failed > 4) {
                 const date = new Date();
@@ -148,7 +149,7 @@ export class MessagesModel {
                 })
                 return 0;
             }
-            if(result.rows[0].login_date !== undefined || result.rows[0].login_date !== null){
+            if(result.rows[0].login_date !== undefined && result.rows[0].login_date !== null){
                 const now = new Date();
                 const before = new Date(result.rows[0].login_date);
                 if(hours(before, now)=== false){
@@ -164,19 +165,21 @@ export class MessagesModel {
                 }
             }
             const usuario = await db.execute({
-                sql: 'select username, password, name from users where username = :username',
-                args: { username: username }
+                sql: 'select id, username, password, name from users where username = :username',
+                args: { username }
             })
             const userpassword = usuario.rows[0].password
             const valid = await bcrypt.compare(password, userpassword)
             if (!valid) {
                 await db.execute({
                     sql: 'update users set login_failed = login_failed + 1 where username = :username',
-                    args: { username: username }
+                    args: { username }
                 })
                 return null;
             }
-            const createdtoken = token({ input: { username: usuario.rows[0].username, id: usuario.rows[0].id } });
+            console.log(usuario.rows[0].username, usuario.rows[0].id)
+            const createdtoken = token({username: usuario.rows[0].username, id: usuario.rows[0].id });
+            console.log('Regreso de models')
             return createdtoken;
         } catch (e) {
             console.error(e)
@@ -204,7 +207,7 @@ export class MessagesModel {
         }
     }
     static async register({ input }) {
-        const { username, password, name } = input
+        const { username, password, name, email } = input
         const hashedpassword = await bcrypt.hash(password, 10)
         try {
             const usuario = await db.execute({
@@ -215,11 +218,12 @@ export class MessagesModel {
                 return null
             }
             const result = await db.execute({
-                sql: 'insert into users(username, password, name) values(:username, :password, :name)',
+                sql: 'insert into users(username, password, name, email) values(:username, :password, :name, :email)',
                 args: {
                     username,
                     password: hashedpassword,
-                    name
+                    name,
+                    email
                 }
             })
             if (result === undefined || result === null || result.rowsAffected === 0) {
@@ -229,7 +233,7 @@ export class MessagesModel {
                 sql: 'select id, username, password from users where username = :username',
                 args: { username: username }
             })
-            const createdtoken = token({ input: { username: user.rows[0].username, id: user.rows[0].id } });
+            const createdtoken = token({username: user.rows[0].username, id: user.rows[0].id });
             result.token = createdtoken;
             return result;
         } catch (e) {
@@ -430,9 +434,8 @@ export class MessagesModel {
             return null;
         }
     }
-    static async getAccountDetails({ input }) {
+    static async getAccountDetails({ username }) {
         try {
-            const { username } = input;
             const result = await db.execute({
                 sql: 'select username, name, email from users where username =: username',
                 args: { username }

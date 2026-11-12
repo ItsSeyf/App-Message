@@ -15,7 +15,8 @@ export const corsMiddleware=({accepted_origins= AcceptedOrigins}={})=>cors({
         }
         if(!origin){ return callback(null, true)}
         return callback(new Error('Origin not allowed by CORS'))
-    }
+    },
+    credentials: true
 })
 
 export const tokenisvalid=(req, res, next)=>{

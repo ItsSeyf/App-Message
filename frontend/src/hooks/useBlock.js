@@ -21,14 +21,15 @@ export function useBlock(){
             }
             setBlockedUsers(result);
             setCargando(false); 
-        })
-    })
+        })()
+    }, [])
     const handleUnblockUser = async (event)=>{
         setError(false);
         setMensajeError('');
         setCargando(true);
         event.preventDefault();
-        const data = new FormData(event.target);
+        const form = event.currentTarget;
+        const data = new FormData(form);
         const blocked = data.get('blocked');
         const result = await unblockUser(blocked);
         if(result.status === 404){
@@ -41,13 +42,13 @@ export function useBlock(){
             setMensajeError('Server error while unblocking user. Try again later.');
             setCargando(false);
             return;
-        }else if (respuesta.status === 401) {
+        }else if (result.status === 401) {
             setCargando(false);
             form.reset();
             window.location.href = '/Login'
             return
         }
-        setBlockedUsers(blockedUsers.filter(user => user.username !== username))
+        setBlockedUsers(blockedUsers.filter(user => user.username !== blocked))
         setCargando(false);
     }
     const closeAlert = ()=>{

@@ -1,5 +1,5 @@
 import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
-const url = 'http://localhost:1234/';
+const url = 'http://localhost:1234';
 
 export const registerUser = async (datos) => {
     try {
@@ -11,8 +11,7 @@ export const registerUser = async (datos) => {
             },
             body: JSON.stringify(datos)
         })
-        const result = await response.json();
-        return response.status=== 404 ? null : result;
+        return response.status=== 404 ? {status: 404} : {status: 201};
     }
     catch (e) {
         console.error(e);
@@ -22,6 +21,7 @@ export const registerUser = async (datos) => {
 
 export const loginUser = async (datos) => {
     try {
+        console.log('antes API')
         const response = await fetch(`${url}/messages/login`, {
             method: 'POST',
             credentials: 'include',
@@ -30,11 +30,11 @@ export const loginUser = async (datos) => {
             },
             body: JSON.stringify(datos)
         })
-        const result = await response.json();
-        if(result.status === 403){
+        console.log('regreso API')
+        if(response.status === 403){
             return 1;
         }
-        return response.status=== 404 ? null : result;
+        return response.status=== 404 ? null : {status: 200};
     }
     catch (e) {
         console.error(e);
@@ -111,7 +111,10 @@ export const getAgenda = async ()=>{
         })
         const result = await response.json();
         if(response.status === 404){
-            return null;
+            return {status: 404};
+        }else if(response.status === 401){
+            window.location.href = '/Login'
+            return {status: 401}
         }
         return result;
     }catch(e){

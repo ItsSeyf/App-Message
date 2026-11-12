@@ -10,21 +10,25 @@ export function useAgenda() {
         (async () => {
             setCargando(true);
             const result = await getAgenda();
-            if (result === 500) {
+            if(result=== null){
+            setCargando(false);
+            return;
+            }
+            if (result.status === 500) {
                 setError(true);
                 setMensajeError('Server error while getting agenda. Try again later.');
                 setCargando(false);
                 return;
             } else if (result.status === 401) {
                 setCargando(false);
-                window.location.href = '/'
+                window.location.href = '/Login'
                 return;
             }
             setAgenda(result);
             setCargando(false);
-        })
+        })()
     }, [])
-    const closeAlert = ()=>{
+    const closeAlert = () => {
         setError(false);
         setMensajeError('');
     }
@@ -43,7 +47,7 @@ export function useAgenda() {
             setError(true);
             setMensajeError('Server error while adding to agenda. Try again later.');
             setCargando(false);
-        }else if (result.status === 401) {
+        } else if (result.status === 401) {
             setCargando(false);
             form.reset();
             window.location.href = '/Login'
@@ -57,7 +61,7 @@ export function useAgenda() {
     const removeFromAgenda = async (receiver) => {
         setCargando(true);
         const result = blockUser(receiver);
-        if(result){
+        if (result) {
             setAgenda(agenda.filter(user => user.username !== receiver))
         }
         setCargando(false);
