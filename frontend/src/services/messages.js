@@ -73,11 +73,7 @@ export const sendMessage = async (datos) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            receiver: datos.receptor,
-            messages: datos.mensaje,
-            fecha: datos.fecha
-        })
+        body: JSON.stringify(datos)
     })
     const result = await response.json();
     if(response.status === 404){
@@ -131,7 +127,7 @@ export const addAgenda =async (receiver)=>{
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ receiver })
+            body: JSON.stringify(receiver )
         })
         const result = await response.json();
         return response.status === 404 || response.status ===400 ? null : result;
@@ -202,7 +198,7 @@ export const editMessage = async (data)=>{
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ data })
+            body: JSON.stringify(data )
         })
         const result = await response.json();
         return response.status === 500 ? null: result;

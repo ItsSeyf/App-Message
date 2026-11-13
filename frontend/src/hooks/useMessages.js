@@ -3,7 +3,7 @@ import { getMessages, sendMessage, Logout, editMessage, deleteMessage } from '..
 import { useState, useEffect, useReducer } from 'react';
 import { messagesReducer, messagesInitialState } from '../reducers/messages.js';
 
-export function useMessages() {
+export function useMessages(receiver) {
     const [state, dispatch] = useReducer(messagesReducer, messagesInitialState);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState(false);
@@ -11,7 +11,7 @@ export function useMessages() {
     useEffect(() => {
         (async () => {
             setCargando(true);
-            const respuesta = await getMessages();
+            const respuesta = await getMessages(receiver);
             if (respuesta.status === 500) {
                 setError(true);
                 setMensajeError('Server error while getting messages. Try again later.');
@@ -63,10 +63,10 @@ export function useMessages() {
         event.preventDefault();
         const form = event.currentTarget;
         const data = new FormData(form);
-        const mensaje = data.get('mensaje')
-        const receptor = data.get('receptor')
-        const fecha = new Date().toISOString()
-        const respuesta = await sendMessage({ receiver: receptor, messages: mensaje, created_at: fecha });
+        const messages = data.get('mensaje')
+        const receiver = data.get('receptor')
+        const created_at = new Date().toISOString()
+        const respuesta = await sendMessage({ receiver, messages, created_at });
         if (respuesta === 500) {
             setCargando(false);
             setError(true);

@@ -31,11 +31,11 @@ export function useLogin() {
         event.preventDefault();
         const form = event.currentTarget;
         const data = new FormData(form);
-        const usuario = data.get('user')
-        const contra = data.get('pass')
+        const username = data.get('user')
+        const password = data.get('pass')
         try {
             console.log('antes de consulta')
-            const respuesta = await loginUser({ username: usuario, password: contra });
+            const respuesta = await loginUser({ username, password });
             if (respuesta.status === 200) {
                 console.log('hola')
                 setCargando(false);

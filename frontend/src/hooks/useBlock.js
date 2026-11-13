@@ -16,7 +16,7 @@ export function useBlock(){
                 return;
             } else if(result.status === 401){
                 setCargando(false);
-                window.location.href = '/'
+                window.location.href = '/Login'
                 return;
             }
             setBlockedUsers(result);

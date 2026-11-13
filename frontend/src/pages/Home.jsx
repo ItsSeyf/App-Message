@@ -18,7 +18,7 @@ import { useState } from 'react';
 import { useMessages } from '../hooks/useMessages.js';
 
 export default function Home({ routeParams }) {
-    const {cargando, error, mensajeError, state, handleSubmit, cerrarSesion, closeAlert, editmessage, deletemessage} = useMessages();
+    const {cargando, error, mensajeError, state, handleSubmit, cerrarSesion, closeAlert, editmessage, deletemessage} = useMessages(routeParams);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editedMessage, setEditedMessage] = useState('');
 

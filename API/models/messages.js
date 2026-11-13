@@ -266,7 +266,7 @@ export class MessagesModel {
         }
     }
     static async editMessage({ input }) {
-        const { id, message, username} = input;
+        const { id, messages, username} = input;
         try {
             const result = await db.execute({
                 sql: 'select id from messages where id = :id and sender = :username',
@@ -277,7 +277,7 @@ export class MessagesModel {
             }
             const update = await db.execute({
                 sql: 'update messages set messages = :message where id = :id and sender = :username',
-                args: { message, id, username }
+                args: { messages, id, username }
             })
             if (!update || update.rowsAffected === 0) {
                 return null;

@@ -102,8 +102,8 @@ export class MessagesController {
     }
     static async editMessage(req, res) {
         const { username } = req.user;
-        const {id, message} = req.body;
-        const result = await MessagesModel.editMessage({input: { username, id, message} })
+        const {id, messages} = req.body;
+        const result = await MessagesModel.editMessage({input: { username, id, messages} })
         if (result === null) {
             return res.status(500).json({ message: 'Message not edited' })
         }

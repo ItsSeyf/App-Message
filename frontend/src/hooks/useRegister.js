@@ -37,12 +37,12 @@ export function useRegister() {
         event.preventDefault();
         const form = event.currentTarget;
         const data = new FormData(form);
-        const usuario = data.get('user')
-        const contra = data.get('pass')
+        const username = data.get('user')
+        const password  = data.get('pass')
         const name = data.get('name')
         const email = data.get('email')
         try {
-            const respuesta = await registerUser({ username: usuario, password: contra, name, email })
+            const respuesta = await registerUser({ username, password, name, email })
             if (respuesta.status === 201) {
                 setCargando(false);
                 form.reset()
