@@ -22,7 +22,6 @@ export class MessagesController {
         const {username, password} = req.body;
         const result = await MessagesModel.login({ input: {username, password} })
         if (result) {
-            console.log('Todo correcto')
             return res.cookie('access_token', result, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',

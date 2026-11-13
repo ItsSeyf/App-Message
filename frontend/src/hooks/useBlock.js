@@ -23,14 +23,11 @@ export function useBlock(){
             setCargando(false); 
         })()
     }, [])
-    const handleUnblockUser = async (event)=>{
+    const handleUnblockUser = async (data)=>{
         setError(false);
         setMensajeError('');
         setCargando(true);
-        event.preventDefault();
-        const form = event.currentTarget;
-        const data = new FormData(form);
-        const blocked = data.get('blocked');
+        const blocked = data;
         const result = await unblockUser(blocked);
         if(result === 400){
             setError(true);
