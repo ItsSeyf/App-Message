@@ -9,12 +9,12 @@ export function useBlock(){
         (async()=>{
             setCargando(true);
             const result = await getBlockedUsers();
-            if(result.status === 500){
+            if(result === 500){
                 setError(true);
                 setMensajeError('Server error while getting blocked users. Try again later.');
                 setCargando(false);
                 return;
-            } else if(result.status === 401){
+            } else if(result === 401){
                 setCargando(false);
                 window.location.href = '/Login'
                 return;
@@ -32,17 +32,17 @@ export function useBlock(){
         const data = new FormData(form);
         const blocked = data.get('blocked');
         const result = await unblockUser(blocked);
-        if(result.status === 404){
+        if(result === 400){
             setError(true);
-            setMensajeError('User not found. Cannot unblock user.');
+            setMensajeError('Select an user');
             setCargando(false);
             return;
-        }else if(result.status === 500){
+        }else if(result === 500){
             setError(true);
             setMensajeError('Server error while unblocking user. Try again later.');
             setCargando(false);
             return;
-        }else if (result.status === 401) {
+        }else if (result === 401) {
             setCargando(false);
             form.reset();
             window.location.href = '/Login'

@@ -43,12 +43,12 @@ export function useRegister() {
         const email = data.get('email')
         try {
             const respuesta = await registerUser({ username, password, name, email })
-            if (respuesta.status === 201) {
+            if (respuesta === 201) {
                 setCargando(false);
                 form.reset()
                 window.location.href = '/Home'
                 return;
-            } else if (respuesta.status === 404) {
+            } else if (respuesta === 404) {
                 setCargando(false);
                 setError(true);
                 setErrorMessage('The user already exists');
@@ -57,7 +57,6 @@ export function useRegister() {
             setCargando(false);
             setError(true);
             setErrorMessage('Server Error. Try again later.');
-            console.error(respuesta);
         } catch (error) {
             setCargando(false);
             console.error('Error en la solicitud:', error)

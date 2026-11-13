@@ -45,7 +45,7 @@ export class MessagesModel {
         try {
             if (input.username && input.receiver) {
                 const result = await db.execute({
-                    sql: 'select id, name, sender, receiver, messages, created_at from messages where (sender = :username and receiver = :receiver) or (sender = :receiver and receiver = :username) inner join users on messages.sender = users.username order by created_at desc',
+                    sql: 'select messages.id, users.name, messages.sender, messages.receiver, messages.messages, messages.created_at from messages inner join users on messages.sender = users.username where (messages.sender = :username and messages.receiver = :receiver) or (messages.sender = :receiver and messages.receiver = :username) order by messages.created_at desc',
                     args: { username: input.username, receiver: input.receiver }
                 })
                 return result.rows.length > 0 ? result.rows : null
@@ -87,7 +87,7 @@ export class MessagesModel {
                 return null;
             }
             const message = await db.execute({
-                    sql: 'select id, name, sender, receiver, messages, created_at from messages where messages.id = :id inner join users on messages.sender = users.username order by created_at desc',
+                    sql: 'select messages.id, users.name, messages.sender, messages.receiver, messages.messages, messages.created_at from messages inner join users on messages.sender = users.username where messages.id = :id order by messages.created_at desc',
                     args: { id: result.lastInsertRowid }
                 })
             channel.sendToQueue(queue, Buffer.from(JSON.stringify(message.rows[0])), {
@@ -104,10 +104,10 @@ export class MessagesModel {
                 sql: 'select users.username, users.name from agenda, users where agenda.username = :username and agenda.person = users.username',
                 args: { username }
             })
-            return result.rows.length > 0 ? result.rows : null
+            return result.rows.length > 0 ? result.rows : []
         } catch (e) {
             console.error(e)
-            return null
+            return null;
         }
     }
     static async createAgenda({ input }) {
@@ -126,7 +126,7 @@ export class MessagesModel {
             }
             const result = await db.execute({
                 sql: 'insert into agenda (username, person) values( :username, :person), (:person, :username)',
-                args: { username, person }
+                args: { username, person: receiver }
             })
             return result.rowsAffected > 0 ? 'ok' : null;
         } catch (e) {
@@ -177,9 +177,7 @@ export class MessagesModel {
                 })
                 return null;
             }
-            console.log(usuario.rows[0].username, usuario.rows[0].id)
             const createdtoken = token({username: usuario.rows[0].username, id: usuario.rows[0].id });
-            console.log('Regreso de models')
             return createdtoken;
         } catch (e) {
             console.error(e)
@@ -276,7 +274,7 @@ export class MessagesModel {
                 return null;
             }
             const update = await db.execute({
-                sql: 'update messages set messages = :message where id = :id and sender = :username',
+                sql: 'update messages set messages = :messages where id = :id and sender = :username',
                 args: { messages, id, username }
             })
             if (!update || update.rowsAffected === 0) {
@@ -301,7 +299,7 @@ export class MessagesModel {
             }
             const remove = await db.execute({
                 sql: 'delete from messages where id = :id',
-                args: { id: id }
+                args: { id }
             })
             if (!remove || remove.rowsAffected === 0) {
                 return null;

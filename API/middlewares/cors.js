@@ -1,14 +1,11 @@
 import cors from 'cors'
 import jwt from 'jsonwebtoken';
-const AcceptedOrigins=[
-    'http://localhost:5173',
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'http://localhost:8086',
-    'http://localhost:8087'
+export const acceptedOrigins=[
+    'http://192.168.137.126:5173',
+    'http://localhost:5173'
 ]
 
-export const corsMiddleware=({accepted_origins= AcceptedOrigins}={})=>cors({
+export const corsMiddleware=({accepted_origins= acceptedOrigins}={})=>cors({
     origin :(origin, callback)=>{
         if(accepted_origins.includes(origin)){
         return callback(null, true)

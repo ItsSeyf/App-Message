@@ -3,7 +3,7 @@ import { MessagesModel } from '../models/messages.js'
 export class MessagesController {
     static async getALL(req, res) {
         const { username } = req.user;
-        const { receiver } = req.body;
+        const { receiver } = req.query;
         if(!receiver){
             return res.status(400).json({messsage: 'The information is incomplete'})
         }
@@ -22,6 +22,7 @@ export class MessagesController {
         const {username, password} = req.body;
         const result = await MessagesModel.login({ input: {username, password} })
         if (result) {
+            console.log('Todo correcto')
             return res.cookie('access_token', result, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -65,9 +66,11 @@ export class MessagesController {
     }
 
     static async getAgenda(req, res) {
-        console.log(req.user)
         const { username } = req.user;
         const result = await MessagesModel.getAgenda({ username })
+        if(result === null){
+            res.status(500).json({message: 'Server error'})
+        }
         return res.status(200).json(result)
     }
 
@@ -97,7 +100,10 @@ export class MessagesController {
     }
     static async getBlocked(req, res) {
         const { username } = req.user;
-        const result = await MessagesModel.getBlocked({ username });
+        const result = await MessagesModel.getBlockedUsers({ username });
+        if(result === null){
+            return res.status(500).json({message: 'Server Error'})
+        }
         return res.status(200).json(result)
     }
     static async editMessage(req, res) {
@@ -155,6 +161,6 @@ export class MessagesController {
         if(result=== null){
             return res.status(404).json({message: 'Error getting the details'})
         }
-        return res.status(200).json({message: 'Password modified'})
+        return res.status(200).json(result)
     }
 }

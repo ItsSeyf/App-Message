@@ -16,26 +16,29 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { useMessages } from '../hooks/useMessages.js';
+import Navbar from '../components/Navbar.jsx';
 
 export default function Home({ routeParams }) {
-    const {cargando, error, mensajeError, state, handleSubmit, cerrarSesion, closeAlert, editmessage, deletemessage} = useMessages(routeParams);
+    const {cargando, error, mensajeError, state, handleSubmit, closeAlert, editmessage, deletemessage} = useMessages(routeParams);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editedMessage, setEditedMessage] = useState('');
 
     return (
+        <>
+        <Navbar />
         <Container sx={{ display: 'flex', flexDirection: 'row', gap: 2, height: '92vh', padding: 2 }}>
 
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography component="h1" variant="h5">
-                    Enviar Mensaje
+                    Send a Message
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <FormControl>
-                        <FormLabel htmlFor="receptor">To</FormLabel>
+                        <FormLabel htmlFor="name">To</FormLabel>
                         <TextField
-                            id="receptor"
-                            name="receptor"
-                            defaultValue={routeParams.receiver}
+                            id="name"
+                            name="name"
+                            defaultValue={routeParams.name}
                             fullWidth
                             color="primary"
                             disabled = "true"
@@ -55,6 +58,17 @@ export default function Home({ routeParams }) {
                             rows={4}
                         />
                     </FormControl>
+                    <FormControl>
+                        <TextField
+                            id="receptor"
+                            name="receptor"
+                            type='hidden'
+                            value={routeParams.receiver}
+                            fullWidth
+                            color="primary"
+                            required
+                        />
+                    </FormControl>
                     <Button
                         type="submit"
                         variant="contained"
@@ -65,12 +79,6 @@ export default function Home({ routeParams }) {
                     </Button>
                 </Box>
                 <Divider />
-                <Button
-                    color="primary"
-                    onClick={cerrarSesion}
-                    disabled={cargando}>
-                    {cargando ? 'Wait...' : 'Log Off'}
-                </Button>
             </Box>
 
             <Box
@@ -104,7 +112,7 @@ export default function Home({ routeParams }) {
                                 }}
                             >
                                 <Typography variant="body1">
-                                    <strong>From:</strong> {mensaje.receiver === routeParams.receiver ? mensaje.receiver : 'You'} <br />
+                                    <strong>From:</strong> {mensaje.sender === routeParams.receiver ? mensaje.receiver : 'You'} <br />
                                 </Typography>
                                 <Typography variant="body1">
                                     <strong>To:</strong> {mensaje.receiver === routeParams.receiver ? mensaje.receiver : 'You'} <br />
@@ -203,5 +211,6 @@ export default function Home({ routeParams }) {
                 </DialogActions>
             </Dialog>
         </Container>
+        </>
     );
 }

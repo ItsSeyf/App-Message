@@ -20,7 +20,6 @@ import {
 export default function Login() {
     const {error, errormessage, closeAlert,
         cargando,
-        validar,
         handleSubmit} = useLogin();
     return(
         <Container>
@@ -55,7 +54,7 @@ export default function Login() {
                     placeholder="*******"
                     color="primary"/>
                 </FormControl>
-                <Button type="submit" variant="contained" color="success" onClick={validar} fullWidth disabled={cargando}>
+                <Button type="submit" variant="contained" color="success" fullWidth disabled={cargando}>
                     {cargando ? 'Loggin in...' : 'Log in'}
                 </Button>
             </Box>

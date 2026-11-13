@@ -16,12 +16,15 @@ import {
 } from '@mui/material';
 import { useAgenda } from '../hooks/useAgenda.js';
 import { navigate } from '../components/Link.jsx';
+import Navbar from '../components/Navbar.jsx';
 
 export default function Agenda() {
 
     const { agenda, error, cargando, mensajeError, handleSubmit, removeFromAgenda,closeAlert} = useAgenda();
 
     return (
+        <>
+        <Navbar />
         <Container sx={{ display: 'flex', flexDirection: 'row', gap: 2, height: '92vh', padding: 2 }}>
 
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -85,7 +88,7 @@ export default function Agenda() {
                                 {person.username}
                             </Typography>
                             <Button
-                                onClick={() => navigate(`/Home/${encodeURIComponent(person.username)}`)}
+                                onClick={() => navigate(`/Home/${encodeURIComponent(person.username)}/${encodeURIComponent(person.name)}`)}
                                 variant="contained"
                                 color="secondary"
                                 disabled={cargando}
@@ -128,5 +131,6 @@ export default function Agenda() {
                 </DialogActions>
             </Dialog>
         </Container>
+        </>
     )
 }

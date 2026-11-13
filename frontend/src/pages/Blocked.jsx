@@ -11,10 +11,13 @@ import {
     Typography
 } from '@mui/material';
 import { useBlock } from '../hooks/useBlock.js'
+import Navbar from '../components/Navbar.jsx'
 export default function Blocked() {
     const { blockedUsers, cargando, error, mensajeError, handleUnblockUser, closeAlert } = useBlock();
 
     return (
+        <>
+        <Navbar />
         <Container sx={{ display: 'flex', flexDirection: 'row', gap: 2, height: '92vh', padding: 2 }}>
 
             <Box
@@ -85,5 +88,6 @@ export default function Blocked() {
                 </DialogActions>
             </Dialog>
         </Container>
+        </>
     )
 }

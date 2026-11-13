@@ -2,12 +2,14 @@ GET http://localhost:1234/messages/agenda
 
 ###Login
 
-POST http://localhost:1234/messages/login
+POST http://localhost:1234/messages/register
 Content-Type: application/json
 
 {
-    "username": "Pepito",
-    "password": "pepito"
+    "username": "Laura",
+    "name": "Laura Perez",
+    "password": "1Au6N",
+    "email" : "michael.mendezb27@gmail.com"
 }
 
 ###Get messages

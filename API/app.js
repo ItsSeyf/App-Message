@@ -1,5 +1,5 @@
 import express, {json} from 'express';
-import { corsMiddleware } from './middlewares/cors.js';
+import { acceptedOrigins, corsMiddleware } from './middlewares/cors.js';
 import {createServer} from 'node:http'
 import {Server} from 'socket.io'
 import {messagesRouter} from './routes/messages.js'
@@ -14,8 +14,9 @@ const app= express();
 const server=createServer(app);
 
 const io= new Server(server, {
-    cors :{
-        origin: '*',
+    cors: {
+        origin: acceptedOrigins,
+        credentials: true,
         methods: ['GET', 'POST']
     },
 });
@@ -55,6 +56,6 @@ consumeMessages(io)
 
 const Port= 1234;
 
-server.listen(Port, ()=>{
-    console.log(`Server is running on port http://localhost:${Port}`);
+server.listen(Port, '0.0.0.0', ()=>{
+    console.log(`Server is running on port http://0.0.0.0:${Port}`);
 })

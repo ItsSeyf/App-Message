@@ -14,12 +14,12 @@ export function useAgenda() {
             setCargando(false);
             return;
             }
-            if (result.status === 500) {
+            if (result === 500) {
                 setError(true);
                 setMensajeError('Server error while getting agenda. Try again later.');
                 setCargando(false);
                 return;
-            } else if (result.status === 401) {
+            } else if (result === 401) {
                 setCargando(false);
                 window.location.href = '/Login'
                 return;
@@ -39,31 +39,48 @@ export function useAgenda() {
         const data = new FormData(form);
         const receiver = data.get('receiver');
         const result = await addAgenda(receiver);
-        if (result.status === 404) {
+        if (result === 404) {
             setError(true);
             setMensajeError('User not found. Cannot add to agenda.');
             setCargando(false);
-        } else if (result.status === 500) {
+            return;
+        } else if (result === 500) {
             setError(true);
             setMensajeError('Server error while adding to agenda. Try again later.');
             setCargando(false);
-        } else if (result.status === 401) {
+            return;
+        } else if (result === 401) {
             setCargando(false);
             form.reset();
             window.location.href = '/Login'
-            return
+            return;
         }
         const newagenda = await getAgenda();
         setAgenda(newagenda);
         setCargando(false);
-        return result;
+        return;
     }
     const removeFromAgenda = async (receiver) => {
         setCargando(true);
         const result = blockUser(receiver);
-        if (result) {
-            setAgenda(agenda.filter(user => user.username !== receiver))
+        if (result === 404) {
+            setError(true);
+            setCargando(false);
+            setMensajeError('User does not exists');
+        }else if(result ===400){
+            setError(true);
+            setCargando(false)
+            setMensajeError('Select an user')
+        }else if(result ===500){
+            setError(true);
+            setCargando(false);
+            setMensajeError('Server Error');
+        }else if(result ===401){
+            setCargando(false);
+            window.location.href = '/Login'
+            return;
         }
+        setAgenda(agenda.filter(user => user.username !== receiver))
         setCargando(false);
     }
     return { agenda, error, cargando, mensajeError, handleSubmit, removeFromAgenda, closeAlert };

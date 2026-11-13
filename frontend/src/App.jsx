@@ -24,7 +24,7 @@ const appRoutes=[
     Component : LazyRegister
   },
   {
-    path: '/Home/:receiver',
+    path: '/Home/:receiver/:name',
     Component: LazyHome
   },
   {
@@ -40,7 +40,7 @@ function App() {
         <Router routes ={appRoutes} defaultComponent={Page404}>
           <Route path='/Login' Component={LazyLogin} />
           <Route path='/Register' Component={LazyRegister} />
-          <Route path='/Home/:receiver' Component={LazyHome} />
+          <Route path='/Home/:receiver/:name' Component={LazyHome} />
           <Route path = '/Agenda' Component = {LazyAgenda} />
           <Route path = '/Blocked' Component = {LazyBlocked} />
           <Route path='/' Component={LazyAgenda} />
